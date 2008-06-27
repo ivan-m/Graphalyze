@@ -9,7 +9,8 @@ import qualified Data.Map as M
 
 type AGr a = Gr a ()
 
-type Surround a = Context a ()
+type AContext a = Context a ()
+type ADecomp a = Decomp Gr a ()
 
 data GraphData a = GraphData { graph :: AGr a,
                                wantedRoot :: Maybe (LNode a)
@@ -47,10 +48,10 @@ importData params = GraphData { graph = dGraph, wantedRoot = rootNode }
 nodeLabel      :: GraphData a -> Node -> Maybe a
 nodeLabel gr n = lab (graph gr) n
 
-findNodesFor   :: (GraphData a -> [Surround a]) -> GraphData a -> [LNode a]
+findNodesFor   :: (GraphData a -> [AContext a]) -> GraphData a -> [LNode a]
 findNodesFor f = nodeOf . f
 
-nodeOf :: (Functor f) => f (Surround a) -> f (LNode a)
+nodeOf :: (Functor f) => f (AContext a) -> f (LNode a)
 nodeOf = fmap labNode'
 
 single     :: [a] -> Bool
@@ -62,3 +63,25 @@ label = snd
 
 node :: LNode a -> Node
 node = fst
+
+fixPoint     :: (Eq a) => (AGr a -> AGr a) -> AGr a -> AGr a
+fixPoint f x = if (equal x x')
+               then x'
+               else fixPoint f x'
+    where
+      x' = f x
+
+-- same as takeWhile, but include the first invalid element
+           
+takeWhile'      :: (a -> Bool) -> [a] -> [a]
+takeWhile' _ [] = []
+takeWhile' p (x:xs)
+    | p x       = x : takeWhile' p xs
+    | otherwise = [x]
+
+filterNodes     :: (AGr a -> LNode a -> Bool) -> AGr a -> [LNode a]
+filterNodes p g = filter (p g) (labNodes g)
+
+
+applyAlg   :: (AGr a -> b) -> GraphData a -> b
+applyAlg f = f . graph
