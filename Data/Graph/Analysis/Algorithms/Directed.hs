@@ -1,7 +1,7 @@
 module Data.Graph.Analysis.Algorithms.Directed where
 
 import Data.Graph.Analysis.Graphalyze
-import Data.Graph.Analysis.Algorithms.Undirected(componentsOf)
+import Data.Graph.Analysis.Algorithms.Common
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Tree
 import Data.Graph.Inductive.Basic

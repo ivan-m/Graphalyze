@@ -1,4 +1,4 @@
-module Data.Graph.Analysis.Algorithms.Undirected where
+module Data.Graph.Analysis.Algorithms.Common where
 
 import Data.Graph.Analysis.Graphalyze    
 import Data.Graph.Inductive.Graph
