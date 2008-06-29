@@ -11,10 +11,20 @@ import Control.Arrow((***), first)
 import Control.Monad(join,liftM2)
 import qualified Data.Map as M
 
+-- find those nodes where everything starts or stops
+    
+endNode        :: (AGr a -> Node -> [Node]) -> AGr a -> LNode a -> Bool
+endNode f g ln = case (f g n) of
+                   []   -> True
+                   [n'] -> n' == n
+                   _    -> False
+    where
+      n = node ln
+
 rootsOf :: AGr a -> [LNode a]
 rootsOf = filterNodes isRoot
     where
-      isRoot g = null . pre g . fst
+      isRoot = endNode pre
 
 {-
 classifyRoots    :: (Eq a) => GraphData a -> (Maybe (LNode a), [LNode a])
@@ -33,14 +43,14 @@ wantedRootExists = isJust . fst . classifyRoots
 leavesOf :: AGr a -> [LNode a]
 leavesOf = filterNodes isLeaf
     where
-      isLeaf g = null . suc g . fst
+      isLeaf = endNode suc
 
 ----
 
 singletonsOf :: AGr a -> [LNode a]
 singletonsOf = filterNodes isSingleton
     where
-      isSingleton g = liftM2 (&&) (null . pre g) (null . suc g) . fst
+      isSingleton = endNode neighbors
 
 ----
 

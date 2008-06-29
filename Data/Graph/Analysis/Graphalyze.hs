@@ -4,7 +4,7 @@ import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Tree
 import Data.Graph.Inductive.Basic
 import Data.Maybe
-import Control.Arrow((***))
+import Control.Arrow((***),first)
 import Control.Monad(join,liftM2,ap)
 import qualified Data.Map as M
 
@@ -14,7 +14,11 @@ type AGr a = Gr a ()
 type PGr a = Gr a Int
 
 type AContext a = Context a ()
+type PContext a = Context a Int
 type ADecomp a = Decomp Gr a ()
+type AGDecomp a = GDecomp Gr a ()
+
+type APath a = [LNode a]
 
 data GraphData a = GraphData { graph :: AGr a,
                                wantedRoot :: Maybe (LNode a)
@@ -101,6 +105,9 @@ addLabels gr = map (ap (,) (fromJust . lab gr))
 
 -- to test with
 
+printList :: (Show a) => [a] -> IO ()
+printList = mapM_ (putStrLn . show)
+
 a,b,c,d,e,f,g,h,i :: AGr Char
 
 a = ([],1,'a',[]::[((),Node)]) & empty
@@ -112,3 +119,6 @@ f = ([((),1),((),2)],0,'f',[((),3)]) & e
 g = ([((),2)],6,'g',[((),2)]) & f
 h = ([((),7)],7,'h',[]) & g
 i = ([((),0)],8,'i',[((),6)]) & h
+j = ([((),0)],9,'j',[((),6)]) & i
+
+p = toPathTree j

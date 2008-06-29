@@ -5,6 +5,7 @@ import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Tree
 import Data.Graph.Inductive.Basic
 import Data.Graph.Inductive.Query.SP
+import Data.Graph.Inductive.Query.DFS
 import Data.Graph.Inductive.Internal.RootPath
 import Data.List
 import Data.Maybe
@@ -14,8 +15,14 @@ import qualified Data.Map as M
 
 -- find connected components
 
-componentsOf    :: AGr a -> [AGr a]
+-- inbuilt function in Query.DFS only returns list of nodes...
+-- this returns the actual graphs, which is thus more usable IMHO.
+
+componentsOf :: AGr a -> [AGr a]
 componentsOf = unfoldr splitComponent
+
+-- this might work, except that the contexts have to be filtered for -- invalid nodes first
+-- map (buildGr . preorder) . dffWith' id
 
 splitComponent :: AGr a -> Maybe (AGr a, AGr a)
 splitComponent g
@@ -58,11 +65,32 @@ canReach gr n = map (node . head . pathValues) tr
 --
 
 nodeCliques       :: AGr a -> LNode a -> [LNode a]
-nodeCliques gr ln = addLabels gr .
-                    nub $ preCl ++ sucCl
+nodeCliques gr ln = addLabels gr cls
     where
       n = node ln
-      clBy f = filter (elem n . f gr) (f gr n)
-      preCl = clBy pre
-      sucCl = clBy suc
+      cls = filter (elem n . suc gr) (suc gr n)
           
+
+----
+
+cyclesIn   :: AGr a -> [APath a]
+cyclesIn g = map (addLabels g) .
+             concat . unfoldr findLoops . toPathTree $ g
+
+findLoops :: PGr a -> Maybe ([Path],PGr a)
+findLoops g
+    | isEmpty g = Nothing
+    | otherwise = Just . first (cyclesFor g) . matchAny $ g
+
+cyclesFor     :: PGr a -> PContext a -> [Path]
+cyclesFor g c = map ((:) n . reverse) .
+                filter ((==) n . head) .
+                concatMap (treeFor g) $ sucs
+    where
+      n = node' c
+      sucs = suc' c
+
+-- spTree only creates branches of shortest length... need to replace -- with a custom function
+             
+treeFor      :: PGr a -> Node -> [Path]
+treeFor gr n = map (map fst . pathValues) . spTree n $ gr
