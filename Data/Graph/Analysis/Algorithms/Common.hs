@@ -15,14 +15,14 @@ import qualified Data.Map as M
 
 -- find connected components
 
--- inbuilt function in Query.DFS only returns list of nodes...
+-- inbuilt function in Query.DFS only returns list of nodes, and only
+-- the shortest paths.
 -- this returns the actual graphs, which is thus more usable IMHO.
 
 componentsOf :: AGr a -> [AGr a]
 componentsOf = unfoldr splitComponent
 
--- this might work, except that the contexts have to be filtered for -- invalid nodes first
--- map (buildGr . preorder) . dffWith' id
+-- map (buildGr . validLinks . preorder) . dffWith' id
 
 splitComponent :: AGr a -> Maybe (AGr a, AGr a)
 splitComponent g
@@ -75,22 +75,43 @@ nodeCliques gr ln = addLabels gr cls
 
 cyclesIn   :: AGr a -> [APath a]
 cyclesIn g = map (addLabels g) .
-             concat . unfoldr findLoops . toPathTree $ g
+             concat . unfoldr findCycles $ g
 
-findLoops :: PGr a -> Maybe ([Path],PGr a)
-findLoops g
+findCycles :: AGr a -> Maybe ([Path], AGr a)
+findCycles g
     | isEmpty g = Nothing
-    | otherwise = Just . first (cyclesFor g) . matchAny $ g
-
-cyclesFor     :: PGr a -> PContext a -> [Path]
-cyclesFor g c = map ((:) n . reverse) .
-                filter ((==) n . head) .
-                concatMap (treeFor g) $ sucs
+    | otherwise = Just . getCycles . matchAny $ g
     where
-      n = node' c
-      sucs = suc' c
-
--- spTree only creates branches of shortest length... need to replace -- with a custom function
+      getCycles (ctx,g) = (cyclesFor (ctx, g), g)
              
 treeFor      :: PGr a -> Node -> [Path]
 treeFor gr n = map (map fst . pathValues) . spTree n $ gr
+
+cyclesFor :: AGDecomp a -> [Path]
+cyclesFor = filter isCycle . pathTree . first Just
+    where
+      isCycle p = (not $ single p) && ((head p) == (last p))
+
+pathTree             :: ADecomp a -> [Path]
+pathTree (Nothing,_) = []
+pathTree (Just ct,g)
+    | isEmpty g = []
+    | null sucs = [[n]]
+    | otherwise = (:) [n] . map (n:) . concatMap (subPathTree g') $ sucs
+    where
+      n = node' ct
+      sucs = suc' ct
+      -- Avoid infinite loops by not letting it continue any further
+      ct' = makeLeaf ct
+      g' = ct' & g
+
+subPathTree      :: AGr a -> Node -> [Path]
+subPathTree gr n = pathTree $ match n gr
+
+-- Remove all outgoing edges
+makeLeaf           :: AContext a -> AContext a
+makeLeaf (p,n,a,s) = (p', n, a, [])
+    where
+      nEdge = ((),n)
+      -- Ensure there isn't an edge (n,n)
+      p' = delete nEdge p
