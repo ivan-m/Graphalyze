@@ -29,6 +29,6 @@ Library {
                              Data.Graph.Analysis.Algorithms.Common
                              Data.Graph.Analysis.Algorithms.Directed
                              Data.Graph.Analysis.Algorithms.Clustering
-        Ghc-Options:         -Wall -O
+        Ghc-Options:         -Wall
         Ghc-Prof-Options:    -auto-all
         }
