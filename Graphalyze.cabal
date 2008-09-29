@@ -1,0 +1,34 @@
+Name:                Graphalyze
+Version:             0.0
+Synopsis:            Graph-Theoretic Analysis library.
+Description:         A library to use graph theory to analyse the relationships
+                        inherent in discrete data.
+Category:            Algorithms
+License:             OtherLicense
+License-File:        LICENSE
+Copyright:           (c) Ivan Lazar Miljenovic
+Author:              Ivan Lazar Miljenovic
+Maintainer:          Ivan.Miljenovic@gmail.com
+Cabal-Version:       >= 1.2
+Build-Type:          Simple
+Tested-With:         GHC==6.8.3
+
+flag small_base
+  description: Choose the new smaller, split-up base package.
+
+Library {
+        if flag(small_base)
+            Build-Depends:   base >= 3, containers, fgl, graphviz >= 2008.9.20
+        else
+            Build-Depends:   base < 3, fgl, graphviz
+        Exposed-Modules:     Data.Graph.Analysis
+                             Data.Graph.Analysis.Types
+                             Data.Graph.Analysis.Utils
+                             Data.Graph.Analysis.Visualisation
+                             Data.Graph.Analysis.Algorithms
+                             Data.Graph.Analysis.Algorithms.Common
+                             Data.Graph.Analysis.Algorithms.Directed
+                             Data.Graph.Analysis.Algorithms.Clustering
+        Ghc-Options:         -Wall -O
+        Ghc-Prof-Options:    -auto-all
+        }
