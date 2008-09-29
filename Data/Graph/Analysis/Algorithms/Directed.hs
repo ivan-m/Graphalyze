@@ -150,8 +150,7 @@ isSingleton' = endNode' pre
 coreOf :: (DynGraph g, Eq a, Eq b) => g a b -> [g a b]
 coreOf = componentsOf . fixPointGraphs stripEnds
     where
-      stripEnds gr' = delNodes roots $ delNodes leaves $ gr'
+      stripEnds gr' = delNodes roots . delNodes leaves $ gr'
           where
             roots = rootsOf' gr'
             leaves = leavesOf' gr'
-            delNodes ns g = foldl' (flip delNode) g ns

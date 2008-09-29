@@ -105,7 +105,7 @@ pathTree (Just ct,g)
 
 -- | Remove all outgoing edges
 makeLeaf           :: Context a b -> Context a b
-makeLeaf (p,n,a,s) = (p', n, a, [])
+makeLeaf (p,n,a,_) = (p', n, a, [])
     where
       -- Ensure there isn't an edge (n,n)
       p' = filter (\(_,n') -> n' /= n) p
@@ -128,7 +128,7 @@ cliquesIn' gr = filter (isClique gr) (findRegular gr)
 -- | Determine if the given list of nodes is indeed a clique,
 --   and not a smaller subgraph of a clique.
 isClique       :: (Graph g) => g a b -> NGroup -> Bool
-isClique gr [] = False
+isClique _  [] = False
 isClique gr ns = null .
                  foldl1' intersect .
                  map ((\\ ns) . corecursive gr) $ ns
@@ -204,7 +204,7 @@ findCycles g
     | isEmpty g = Nothing
     | otherwise = Just . getCycles . matchAny $ g
     where
-      getCycles (ctx,g) = (cyclesFor (ctx, g), g)
+      getCycles (ctx,g') = (cyclesFor (ctx, g'), g')
 
 -- | Find all cycles for the given node.
 cyclesFor :: (DynGraph g) => GDecomp g a b -> [NGroup]
@@ -249,7 +249,7 @@ getChain g n = n : (unfoldr (chainLink g) (chainNext g n))
 -- | Find the next link in the chain.
 chainLink :: (Graph g) => g a b -> Maybe Node
           -> Maybe (Node, Maybe Node)
-chainLink g Nothing = Nothing
+chainLink _ Nothing = Nothing
 chainLink g (Just n)
     | isEmpty g         = Nothing
     | not $ hasPrev g n = Nothing

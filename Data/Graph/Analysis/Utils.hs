@@ -61,17 +61,15 @@ module Data.Graph.Analysis.Utils
 import Data.Graph.Analysis.Types
 
 import Data.Graph.Inductive.Graph
-import Data.Graph.Inductive.Basic hiding (undir)
 import Data.GraphViz
 
 import Data.List
 import Data.Maybe
 import Data.Function
 import qualified Data.Set as Set
-import Data.Set(Set)
 import qualified Data.IntMap as IMap
 import Data.IntMap(IntMap)
-import Control.Monad(join,liftM2,ap)
+import Control.Monad
 import Control.Arrow
 import System.Random
 import System.IO.Unsafe(unsafePerformIO)
@@ -200,9 +198,9 @@ createLookup = IMap.fromList . concatMap addCluster . zip [1..]
 
 -- | Used when the clusters are assigned in a lookup @IntMap@ instance.
 setCluster   :: (DynGraph gr) => IntMap Int -> gr a b -> gr (GenCluster a) b
-setCluster m = nlmap assignCluster
+setCluster m = nlmap assClust
     where
-      assignCluster (n,l) = GC (m IMap.! n) l
+      assClust (n,l) = GC (m IMap.! n) l
 
 -- | A function to convert an @LNode@ to the required @NodeCluster@
 --   for use with the 'Graphviz' library.
@@ -239,6 +237,8 @@ groupElems f = map createGroup
     where
       addOrd a = (f a, a)
       createGroup bas@((b,_):_) = (b, map snd bas)
+      -- This shouldn't ever happen, but let's suppress the -Wall warning.
+      createGroup []            = error "Grouping resulted in an empty list!"
 
 -- | Returns the unique elements of the list in ascending order,
 --   as well as the minimum and maximum elements.
@@ -259,6 +259,7 @@ blockPrint as = init -- Remove the final '\n' on the end.
       showl a = let sa = show a in (sa, length sa)
       las = map showl as
       -- Scale this, to take into account the height:width ratio.
+      sidelen :: Double -- Suppress defaulting messages
       sidelen = (1.75*) . sqrt . fromIntegral . sum $ map snd las
       slen = round sidelen
       serr = round $ sidelen/10

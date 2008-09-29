@@ -31,7 +31,6 @@ import Data.Graph.Analysis.Algorithms
 import Data.Graph.Inductive.Graph
 import Data.List
 import Data.Maybe
-import Control.Arrow((***),first)
 import qualified Data.Map as M
 
 -- -----------------------------------------------------------------------------

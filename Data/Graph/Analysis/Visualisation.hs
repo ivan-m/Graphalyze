@@ -14,7 +14,6 @@ import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 import Data.Graph.Inductive.Graph
 import Data.GraphViz
-import Data.List
 
 -- | Turns the graph into DotGraph format with the given title.
 --   Nodes are labelled, edges aren't.

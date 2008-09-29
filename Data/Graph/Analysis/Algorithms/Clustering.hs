@@ -28,13 +28,11 @@ import Data.Graph.Analysis.Algorithms.Common
 import Data.Graph.Analysis.Algorithms.Directed(rootsOf')
 
 import Data.Graph.Inductive.Graph
-import Data.GraphViz.Attributes
 
 import Data.List
 import Data.Maybe
 import Data.Function
 import qualified Data.Set as Set
-import Data.Set(Set)
 import qualified Data.Set.BKTree as BK
 import Data.Set.BKTree(BKTree, Metric(..))
 import Control.Arrow
@@ -138,7 +136,7 @@ addWhispers g = gmap augment g
                                  , coeff = coefFor n
                                  },s)
       -- Note that cliques are also cycles...
-      cliques = Set.fromList . concat $ cliquesIn' g
+      -- cliques = Set.fromList . concat $ cliquesIn' g
       cycles = Set.fromList . concat $ cyclesIn' g
       roots = Set.fromList $ rootsOf' g
       -- Give more emphasis to interesting parts of the graph.
@@ -258,7 +256,7 @@ nbrCluster g
     where
       ns = nodes g
       numNodes = noNodes g
-      sNum = floor . sqrt $ fI numNodes
+      sNum = floor (sqrt $ fI numNodes :: Double)
       les = labEdges g
       (es,eMin,eMax) = sortMinMax $ map eLabel les
       es' = zip es (tail es)
@@ -268,7 +266,7 @@ nbrCluster g
       (_,dfMin,dfMax) = sortMinMax $ map sub es'
       -- We are going to do >= tests on t, but using Int values, so
       -- take the ceiling.
-      t = ceiling $ ((fI dfMin) + (fI dfMax))/2
+      t = ceiling $ (((fI dfMin) + (fI dfMax))/2 :: Double)
       -- Edges that meet the threshold criteria.
       thrs = filter (\ejs@(ej,_) -> (ej >= 2*eMin) && (sub ejs >= t)) es'
       -- Take the first edges that meets the threshold criteria.
@@ -339,11 +337,6 @@ collapseAll g (n:ns) = foldl' collapser g ns
     where
       collapser g' = collapse g' n
 
--- | Collapse the results of the given function.
-collapseBy     :: (DynGraph gr) => (gr (CNodes a) b -> [Node])
-               -> gr (CNodes a) b -> gr (CNodes a) b
-collapseBy f g = collapseAll g (f g)
-
 -- | Collapse all results of the given function.
 collapseAllBy     :: (DynGraph gr) => (gr (CNodes a) b -> [[Node]])
                   -> gr (CNodes a) b -> gr (CNodes a) b
@@ -353,11 +346,3 @@ collapseAllBy f g = case (filter (not . single) $ f g) of
                              -- the original results used nodes that
                              -- have been collapsed down.
                       (ns:_) -> collapseAllBy f (collapseAll g ns)
-
--- | Collapse all cliques down to single nodes.
-collapseCliques :: (DynGraph gr) => gr (CNodes a) b -> gr (CNodes a) b
-collapseCliques = collapseAllBy cliquesIn'
-
--- | Collapse all cycles down into single nodes.
-collapseCycles :: (DynGraph gr) => gr (CNodes a) b -> gr (CNodes a) b
-collapseCycles = collapseAllBy cyclesIn'
