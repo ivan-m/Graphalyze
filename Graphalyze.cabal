@@ -20,7 +20,7 @@ Library {
         if flag(small_base)
             Build-Depends:   base >= 3, containers, random, fgl, graphviz >= 2008.9.20, bktrees
         else
-            Build-Depends:   base < 3, fgl, graphviz
+            Build-Depends:   base < 3, fgl, graphviz >= 2008.9.20, bktrees
         Exposed-Modules:     Data.Graph.Analysis
                              Data.Graph.Analysis.Types
                              Data.Graph.Analysis.Utils
