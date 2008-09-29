@@ -300,11 +300,11 @@ instance (Show a) => Show (CNodes a) where
     -- Print the labels in a roughly square shape.
     show (CN lns) = blockPrint $ map label lns
 
-collapseGraph   :: (DynGraph gr) => gr a b -> gr (CNodes a) b
+collapseGraph   :: (DynGraph gr, Eq b) => gr a b -> gr (CNodes a) b
 collapseGraph g = foldl' (flip collapseAllBy) cg interestingParts
     where
       cg = makeCollapsible g
-      interestingParts = [cliquesIn', cyclesIn']
+      interestingParts = [cliquesIn', cyclesIn', chainsIn']
 
 -- | Allow the graph to be collapsed.
 makeCollapsible :: (DynGraph gr) => gr a b -> gr (CNodes a) b
