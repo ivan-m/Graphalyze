@@ -29,7 +29,6 @@ import Data.Graph.Analysis.Utils
 import Data.Graph.Analysis.Algorithms.Common
 
 import Data.Graph.Inductive.Graph
-import Data.List
 
 -- -----------------------------------------------------------------------------
 {- |
