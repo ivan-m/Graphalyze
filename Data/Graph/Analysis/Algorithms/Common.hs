@@ -23,8 +23,8 @@ module Data.Graph.Analysis.Algorithms.Common
       uniqueCycles,
       uniqueCycles',
       -- * Chain detection
-      findChains,
-      findChains'
+      chainsIn,
+      chainsIn'
     ) where
 
 import Data.Graph.Analysis.Types
@@ -228,15 +228,15 @@ cyclesFor = map init .
 -}
 
 -- | Find all chains in the given graph.
-findChains   :: (DynGraph g, Eq b) => g a b -> [LNGroup a]
-findChains g = map (addLabels g)
-               $ findChains' g
+chainsIn   :: (DynGraph g, Eq b) => g a b -> [LNGroup a]
+chainsIn g = map (addLabels g)
+             $ chainsIn' g
 
 -- | Find all chains in the given graph.
-findChains'   :: (DynGraph g, Eq b) => g a b -> [NGroup]
-findChains' g = filter (not . single) -- Remove trivial chains
-                . map (getChain g')
-                $ filterNodes' isChainStart g'
+chainsIn'   :: (DynGraph g, Eq b) => g a b -> [NGroup]
+chainsIn' g = filter (not . single) -- Remove trivial chains
+              . map (getChain g')
+              $ filterNodes' isChainStart g'
     where
       -- Try to make this work on two-element cycles, undirected
       -- graphs, etc.
