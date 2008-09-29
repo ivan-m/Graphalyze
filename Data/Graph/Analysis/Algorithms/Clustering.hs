@@ -13,11 +13,14 @@
 module Data.Graph.Analysis.Algorithms.Clustering
     ( -- * Clustering Algorithms
       -- ** Non-deterministic algorithms
+      -- $chinesewhispers
       Whispering,
       chineseWhispers,
       -- ** Spatial Algorithms
+      -- $relneighbours
       relativeNeighbourhood,
       -- * Graph Collapsing
+      -- $collapsing
       CNodes(..),
       collapseGraph
     ) where
@@ -40,7 +43,7 @@ import System.Random
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{- $chinesewhispers
    The Chinese Whispering Algorithm.
    This is an adaptation of the algorithm described in:
 
@@ -50,19 +53,26 @@ import System.Random
    <http://wortschatz.uni-leipzig.de/~cbiemann/pub/2006/BiemannTextGraph06.pdf>
 
    The adaptations to this algorithm are as follows:
+
      * Ignore any edge weightings that may exist, as we can't depend on them
        (also, we want the algorithm to be dependent solely upon the
         /structure/ of the graph, not what it contains).
+
      * Increase the weighting of those nodes present in interesting structures,
        such as loops and root nodes.  This is to try and ensure that these nodes
        end up in the same cluster.
 
+
    Simplistically, the way it works is this:
-     1) Every node is assigned into its own unique cluster.
-     2) For each iteration, sort the nodes into each order.  For each node,
+
+     1. Every node is assigned into its own unique cluster.
+
+     2. For each iteration, sort the nodes into each order.  For each node,
         it joins the most popular cluster in its neighbourhood
         (where popularity is defined by the sum of the weightings).
-     3) Repeat step 2) until a fixed point is reached.
+
+     3. Repeat step 2. until a fixed point is reached.
+
    Note that this algorithm is non-deterministic, and that for some graphs
    no fixed point may be reached (and the algorithm may oscillate between
    a few different graph clusterings).
@@ -92,7 +102,7 @@ chineseWhispers g gr = fst $ fixPointBy eq whispering (gr',g)
             (ns',g'') = shuffle g' ns
       gr' = addWhispers gr
 
--- | Choose a new cluster for the given @Node@.  Note that this updates
+-- | Choose a new cluster for the given 'Node'.  Note that this updates
 --   the graph each time a new cluster value is chosen.
 whisperNode          :: (RandomGen g, DynGraph gr) => (gr (Whispering a) b,g)
                      -> Node -> (gr (Whispering a) b,g)
@@ -166,7 +176,7 @@ clusteringCoef g n = if (liftM2 (||) isNaN isInfinite $ coef)
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{- $relneighbours
    This implements the algorithm called CLUSTER, from the paper:
 
    Bandyopadhyay, S. (2003): An automatic shape independent clustering
@@ -179,15 +189,20 @@ clusteringCoef g n = if (liftM2 (||) isNaN isInfinite $ coef)
    of two-dimensional data points.
 
    The adaptations to this algorithm are as follows:
+
      * Due to the limitations of the BKTree data structure, we utilise a
        /fuzzy/ distance function defined as the ceiling of the standard
        Euclidian distance.
+
      * We utilise 'toPosGraph' to get the spatial locations.  As such,
-       these locations may not be optimal, especially for smaller graphs.
+       these locations may not be optimal, especially for smaller
+       graphs.
+
      * The actual algorithm is applied to each connected component of
        the graph.  The actual paper is unclear what to do in this
        scenario, but Graphviz may locate nodes from separate
        components together, despite them not being related.
+
 
    The algorithm is renamed 'relativeNeighbourhood'.  Experimentally, it
    seems to work better with larger graphs (i.e. more nodes), since
@@ -210,6 +225,7 @@ relativeNeighbourhood g = setCluster cMap g
 --   metric function.
 instance (Eq a) => Metric (PosLabel a) where
     distance = (ceiling . ) . euclidian
+-- Note that this throws an orphan instance warning.
 
 -- | The Euclidian distance function.
 euclidian       :: PosLabel a -> PosLabel a -> Double
@@ -280,10 +296,11 @@ nbrCluster g
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{- $collapsing
    Collapse the /interesting/ parts of a graph down to try and show a
    compressed overview of the whole graph.  Note that this doesn't
-   work too well on undirected graphs, since
+   work too well on undirected graphs, since every pair of nodes forms
+   a K_2 subgraph.
 
    It may be possible to extend this to a clustering algorithm by
    collapsing low density regions into high density regions.

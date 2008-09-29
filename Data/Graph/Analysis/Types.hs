@@ -14,8 +14,8 @@
  -}
 module Data.Graph.Analysis.Types
     ( -- * Graph specialization
-      GraphData(..), -- ^ Graph to be analysed.
-      Gr, -- ^ Default graph type
+      GraphData(..),
+      Gr,
       AGr,
       NGroup,
       LNGroup,
@@ -59,7 +59,7 @@ type LNGroup a = [LNode a]
 
 -- | The class of outputs of a clustering algorithm.
 --   This class is mainly used for visualization purposes,
---   with the @Ord@ instance required for grouping.
+--   with the 'Ord' instance required for grouping.
 --   Instances of this class are intended for use as
 --   the label type of graphs.
 class (Ord c) => ClusterLabel a c | a -> c where

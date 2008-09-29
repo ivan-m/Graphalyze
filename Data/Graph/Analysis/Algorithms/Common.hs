@@ -10,19 +10,23 @@
  -}
 module Data.Graph.Analysis.Algorithms.Common
     ( -- * Graph decomposition
+      -- $connected
       componentsOf,
       pathTree,
       -- * Clique Detection
+      -- $cliques
       cliquesIn,
       cliquesIn',
       findRegular,
       isRegular,
       -- * Cycle Detection
+      -- $cycles
       cyclesIn,
       cyclesIn',
       uniqueCycles,
       uniqueCycles',
       -- * Chain detection
+      -- $chains
       chainsIn,
       chainsIn'
     ) where
@@ -31,20 +35,21 @@ import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 
 import Data.Graph.Inductive.Graph
+-- For linking purposes.  This will throw a warning.
+import Data.Graph.Inductive.Query.DFS(components)
 import Data.List
 import Data.Maybe
 import Control.Arrow
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{- $connected
    Finding connected components.
 
-   Whilst the FGL module "Data.Graph.Inductive.Query.DFS" does indeed
-   have a function 'components' that returns the connected components
-   of a graph, it returns each component as a list of 'Node's.  This
-   implementation instead returns each component as a /graph/, which
-   is much more useful.
+   Whilst the FGL library does indeed have a function 'components'
+   that returns the connected components of a graph, it returns each
+   component as a list of 'Node's.  This implementation instead
+   returns each component as a /graph/, which is much more useful.
 
    Connected components are found by choosing a random node, then
    recursively extracting all neighbours of that node until no more
@@ -111,7 +116,7 @@ makeLeaf (p,n,a,_) = (p', n, a, [])
       p' = filter (\(_,n') -> n' /= n) p
 
 -- -----------------------------------------------------------------------------
-{- |
+{- $cliques
    Clique detection routines.  Find cliques by taking out a node, and
    seeing which other nodes are all common neighbours (by both 'pre'
    and 'suc').
@@ -176,7 +181,7 @@ isRegular g ns = all allCorecursive split
       allCorecursive (n,rs) = null $ rs \\ (corecursive g n)
 
 -- -----------------------------------------------------------------------------
-{- |
+{- $cycles
    Cycle detection.  Find cycles by finding all paths from a given
    node, and seeing if it reaches itself again.
  -}
@@ -217,10 +222,10 @@ cyclesFor = map init .
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{- $chains
    A chain is a path in a graph where for each interior node, there is
    exactly one predecessor and one successor node, i.e. that part of
-   the graph forms a "straight line".  Furthermore, the initial node
+   the graph forms a \"straight line\".  Furthermore, the initial node
    should have only one successor, and the final node should have only
    one predecessor.  Chains are found by recursively finding the next
    successor in the chain, until either a leaf node is reached or no

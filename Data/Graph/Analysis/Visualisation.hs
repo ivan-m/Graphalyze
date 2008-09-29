@@ -5,8 +5,9 @@
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 
-   A wrapper module around the Haskell Graphviz library to turn Graphs
-   into basic graphs for processing by the Graphviz application.
+   A wrapper module around the Haskell "Data.GraphViz" library to
+   turn Graphs into basic graphs for processing by the Graphviz
+   application.
  -}
 module Data.Graph.Analysis.Visualisation where
 
@@ -15,7 +16,7 @@ import Data.Graph.Analysis.Utils
 import Data.Graph.Inductive.Graph
 import Data.GraphViz
 
--- | Turns the graph into DotGraph format with the given title.
+-- | Turns the graph into 'DotGraph' format with the given title.
 --   Nodes are labelled, edges aren't.
 graphviz     :: (Graph g, Show a, Ord b) => String -> g a b -> DotGraph
 graphviz t g = graphToDot g attrs nattrs eattrs
@@ -24,8 +25,8 @@ graphviz t g = graphToDot g attrs nattrs eattrs
       nattrs (_,a) = [Label (show a)]
       eattrs _ = []
 
--- | Turns the graph into DotGraph format with the given title.
---   Cluster the nodes based upon their @ClusterLabel@ clusters.
+-- | Turns the graph into 'DotGraph' format with the given title.
+--   Cluster the nodes based upon their 'ClusterLabel' clusters.
 --   Nodes and clusters are labelled, edges aren't.
 graphvizClusters :: (Graph g, Show c, ClusterLabel a c, Ord b) =>
                     String -> g a b -> DotGraph

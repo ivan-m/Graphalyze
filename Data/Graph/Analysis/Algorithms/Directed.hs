@@ -9,6 +9,7 @@
  -}
 module Data.Graph.Analysis.Algorithms.Directed
     ( -- * Ending nodes
+      -- $ends
       endNode, endNode',
       endBy, endBy',
       -- ** Root nodes
@@ -31,11 +32,15 @@ import Data.Graph.Analysis.Algorithms.Common
 import Data.Graph.Inductive.Graph
 
 -- -----------------------------------------------------------------------------
-{- |
+{- $ends
    Find starting/ending nodes.
 
    We define an ending node as one where, given a function:
-   > f :: (Graph g) => g a b -> Node -> [Node]
+
+   @
+     f :: (Graph g) => g a b -> Node -> [Node]
+   @
+
    the only allowed result is that node itself (to allow for loops).
  -}
 
@@ -62,7 +67,7 @@ endBy' f = filterNodes' (endNode' f)
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{-
    Root detection.
  -}
 
@@ -97,7 +102,7 @@ wantedRootExists = isJust . fst . classifyRoots
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{-
    Leaf detection.
  -}
 
@@ -119,7 +124,7 @@ isLeaf' = endNode' pre
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{-
    Singleton detection.
  -}
 

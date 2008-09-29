@@ -45,9 +45,9 @@ data ImportParams a = Params { -- | The discrete points.
                                -- | The relationships between the points.
                                relationships :: [(a,a)],
                                -- | The expected roots of the graph.
-                               --   If @directed = False@, then this is ignored.
+                               --   If @'directed' = 'False'@, then this is ignored.
                                roots :: [a],
-                               -- | @False@ if relationships are symmetric
+                               -- | 'False' if relationships are symmetric
                                --   (i.e. an undirected graph).
                                directed :: Bool
                              }
@@ -62,18 +62,19 @@ defaultParams = Params { dataPoints = [],
 
 {- |
    Import data into a format suitable for analysis.  This function is
-   /edge-safe/: if any datums are listed in the edges of @params@ that
-   aren't listed in the data points, then those edges are ignored.
-   Thus, no sanitation of the @relationships@ in @params@ is necessary.
+   /edge-safe/: if any datums are listed in the edges of
+   'ImportParams' that aren't listed in the data points, then those
+   edges are ignored.  Thus, no sanitation of the 'relationships' in
+   @ImportParams@ is necessary.
  -}
 importData        :: (Ord a) => ImportParams a -> GraphData a
 importData params = GraphData { graph = dGraph, wantedRoots = rootNodes }
     where
-      -- Adding @Node@ values to each of the data points.
+      -- Adding Node values to each of the data points.
       lNodes = zip [1..] (dataPoints params)
       -- Creating a lookup map from the label to the @Node@ value.
       nodeMap = M.fromList $ map (uncurry (flip (,))) lNodes
-      -- Find the @Node@ value for the given data point.
+      -- Find the Node value for the given data point.
       findNode n = M.lookup n nodeMap
       -- Validate a edge after looking its values up.
       validEdge (v1,v2) = case (findNode v1, findNode v2) of
@@ -88,7 +89,9 @@ importData params = GraphData { graph = dGraph, wantedRoots = rootNodes }
                       (Just n) -> Just (n,l)
                       _        -> Nothing
       -- Construct the root nodes
-      rootNodes = catMaybes $ map validNode (roots params)
+      rootNodes = if (directed params)
+                  then catMaybes $ map validNode (roots params)
+                  else []
       -- Make the graph undirected if necessary.
       setDirection = if (directed params) then id else undir
       -- Construct the graph.

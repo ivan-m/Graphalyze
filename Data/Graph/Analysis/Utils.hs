@@ -29,8 +29,9 @@ module Data.Graph.Analysis.Utils
       oneWay,
       nlmap,
       -- ** Graph layout
-      AttributeNode, -- ^ From "Data.GraphViz"
-      AttributeEdge, -- ^ From "Data.GraphViz"
+      -- | These next two are re-exported from "Data.GraphViz"
+      AttributeNode,
+      AttributeEdge,
       dotizeGraph,
       toPosGraph,
       getPositions,
@@ -78,24 +79,24 @@ import System.IO.Unsafe(unsafePerformIO)
 
 -- | Extracting data from graphs.
 
--- | The node number of an @LNode@.
+-- | The node number of an 'LNode'.
 node :: LNode a -> Node
 node = fst
 
--- | The label of an @LNode@
+-- | The label of an 'LNode'
 label :: LNode a -> a
 label = snd
 
--- | Extract the @Edge@ from the @LEdge@.
+-- | Extract the 'Edge' from the 'LEdge'.
 edge           :: LEdge b -> Edge
 edge (n1,n2,_) = (n1,n2)
 
--- | The label of an @LEdge@
+-- | The label of an 'LEdge'
 eLabel         :: LEdge b -> b
 eLabel (_,_,b) = b
 
--- | Obtain the labels for a list of @Node@s.
---   It is assumed that each @Node@ is indeed present in the given graph.
+-- | Obtain the labels for a list of 'Node's.
+--   It is assumed that each 'Node' is indeed present in the given graph.
 addLabels    :: (Graph g) => g a b -> [Node] -> [LNode a]
 addLabels gr = map (ap (,) (fromJust . lab gr))
 
@@ -111,7 +112,7 @@ filterNodes' p g = filter (p g) (nodes g)
 
 -- | Manipulating graphs.
 
--- | Extract the actual @LNode@s from an @LPath@.
+-- | Extract the actual 'LNode's from an 'LPath'.
 pathValues          :: LPath a -> [LNode a]
 pathValues (LP lns) = lns
 
@@ -190,19 +191,19 @@ getPositions = map label . labNodes . toPosGraph
 
 -- | Cluster utility functions.
 
--- | Create a cluster-lookup @IntMap@.
+-- | Create a cluster-lookup 'IntMap'.
 createLookup :: [[Node]] -> IntMap Int
 createLookup = IMap.fromList . concatMap addCluster . zip [1..]
     where
       addCluster (k,ns) = map (flip (,) k) ns
 
--- | Used when the clusters are assigned in a lookup @IntMap@ instance.
+-- | Used when the clusters are assigned in a lookup 'IntMap' instance.
 setCluster   :: (DynGraph gr) => IntMap Int -> gr a b -> gr (GenCluster a) b
 setCluster m = nlmap assClust
     where
       assClust (n,l) = GC (m IMap.! n) l
 
--- | A function to convert an @LNode@ to the required @NodeCluster@
+-- | A function to convert an 'LNode' to the required 'NodeCluster'
 --   for use with the 'Graphviz' library.
 assignCluster :: (ClusterLabel a c) => LNode a -> NodeCluster c a
 assignCluster nl@(_,a) = C (cluster a) (N nl)
@@ -355,7 +356,7 @@ statistics as = (av,stdDev)
       av = mean as
       stdDev = sqrt . mean $ map (sq . subtract av) as
 
--- | Calculate the mean and standard deviation of a list of @Int@ values.
+-- | Calculate the mean and standard deviation of a list of 'Int' values.
 statistics'    :: [Int]
                -> (Int,Int) -- ^ (Mean, Standard Deviation)
 statistics' as = (av', stdDev')
