@@ -47,6 +47,8 @@ module Data.Graph.Analysis.Utils
       groupElems,
       sortMinMax,
       blockPrint,
+      blockPrintList,
+      blockPrintWith,
       shuffle,
       -- * Statistics functions
       mean,
@@ -254,20 +256,34 @@ sortMinMax as = (as',aMin,aMax)
       aMin = Set.findMin aSet
       aMax = Set.findMax aSet
 
--- | Attempt to convert a list of elements into a square format
---   in as much of a square shape as possible.
-blockPrint    :: (Show a) => [a] -> String
-blockPrint as = init -- Remove the final '\n' on the end.
-                . unlines $ map unwords' lns
+-- | Attempt to convert the @String@ form of a list into
+--   as much of a square shape as possible, using a single
+--   space as a separation string.
+blockPrint :: (Show a) => [a] -> String
+blockPrint = blockPrintWith " "
+
+-- | Attempt to convert the @String@ form of a list into
+--   as much of a square shape as possible, separating values
+--   with commas.
+blockPrintList :: (Show a) => [a] -> String
+blockPrintList = blockPrintWith ",  "
+
+-- | Attempt to convert the @String@ form of a list into
+--   as much of a square shape as possible, using the given
+--   separation string between elements in the same row.
+blockPrintWith        :: (Show a) => String -> [a] -> String
+blockPrintWith sep as = init -- Remove the final '\n' on the end.
+                        . unlines $ map unwords' lns
     where
+      lsep = length sep
       las = addLengths $ map show as
       -- Scale this, to take into account the height:width ratio.
       sidelen :: Double -- Suppress defaulting messages
       sidelen = (1.75*) . sqrt . fromIntegral . sum $ map fst las
       slen = round sidelen
       serr = round $ sidelen/10
-      lns = unfoldr (takeLen slen serr) las
-      unwords' = concat . intersperse blockSep
+      lns = unfoldr (takeLen slen serr lsep) las
+      unwords' = concat . intersperse sep
 
 -- | Added between elements in a row of the block.
 blockSep :: String
@@ -279,20 +295,21 @@ blockSepLength = length blockSep
 
 -- | Using the given line length and allowed error, take the elements of
 --   the next line.
-takeLen :: Int -> Int -> [(Int,String)] -> Maybe ([String],[(Int,String)])
-takeLen _   _   []          = Nothing
-takeLen len err ((l,a):als) = Just lr
+takeLen                          :: Int -> Int -> Int -> [(Int,String)]
+                                 -> Maybe ([String],[(Int,String)])
+takeLen _   _   lsep []          = Nothing
+takeLen len err lsep ((l,a):als) = Just lr
     where
       lmax = len + err
       lr = if l > len
            then ([a],als) -- Overflow line of single item
            else (a:as,als')
-      -- We subtract blockSepLength here to take into account the spacer.
-      (as,als') = takeLine (lmax - l - blockSepLength) als
+      -- We subtract lsep here to take into account the spacer.
+      (as,als') = takeLine (lmax - l - lsep) lsep als
 
 -- | Recursively build the rest of the line with given maximum length.
-takeLine :: Int -> [(Int,String)] -> ([String],[(Int,String)])
-takeLine len als
+takeLine :: Int -> Int -> [(Int,String)] -> ([String],[(Int,String)])
+takeLine len lsep als
     | null als  = ([],als)
     | len <= 0  = ([],als) -- This should be covered by the next guard,
                            -- but just in case...
@@ -300,9 +317,9 @@ takeLine len als
     | otherwise = (a:as,als'')
     where
       ((l,a):als') = als
-      -- We subtract blockSepLength here to take into account the spacer.
-      len' = len - l - blockSepLength
-      (as,als'') = takeLine len' als'
+      -- We subtract lsep here to take into account the spacer.
+      len' = len - l - lsep
+      (as,als'') = takeLine len' lsep als'
 
 {- |
    Shuffle a list of elements.

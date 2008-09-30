@@ -313,7 +313,7 @@ data CNodes a = CN [LNode a]
 --   nodes in Graphviz roughly circular, rather than one long ellipse.
 instance (Show a) => Show (CNodes a) where
     -- Print the labels in a roughly square shape.
-    show (CN lns) = blockPrint $ map label lns
+    show (CN lns) = blockPrintList $ map label lns
 
 collapseGraph   :: (DynGraph gr, Eq b) => gr a b -> gr (CNodes a) b
 collapseGraph g = foldl' (flip collapseAllBy) cg interestingParts
