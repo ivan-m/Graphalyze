@@ -25,8 +25,6 @@ module Data.Graph.Analysis.Visualisation
 
 import Prelude hiding (catch)
 
-import Data.Graph.Analysis.Testing
-
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 import Data.Graph.Inductive.Graph
