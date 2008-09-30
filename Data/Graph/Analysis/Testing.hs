@@ -21,6 +21,7 @@ module Data.Graph.Analysis.Testing
 import Data.Graph.Analysis.Visualisation
 import Data.Graph.Inductive.Graph
 import Data.Graph.Analysis.Types
+import Data.Graph.Analysis.Utils
 import Data.GraphViz
 import System.Process
 import System.Random
@@ -60,13 +61,10 @@ n = ([((),11)],13,'n',[((),11)]) & o
 
 
 preview   :: DotGraph -> IO ()
-preview d = do writeFile dotFile (show d)
-               run ("dot -Tpng " ++ dotFile ++ " > " ++ imgFile)
+preview d = do runGraphviz d Png imgFile
                runCommand ("display " ++ imgFile)
                return ()
     where
-      run s = runCommand s >>= waitForProcess
-      dotFile = loc++file++".dot"
       imgFile = loc++file++".png"
       file = "dotGraph"
       loc = "/tmp/"
