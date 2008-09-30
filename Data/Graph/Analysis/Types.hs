@@ -39,7 +39,7 @@ import Data.Graph.Inductive.Tree
 -- | Represents information about the graph being analysed.
 data GraphData a = GraphData { -- | We use a graph type with no edge labels.
                                graph :: AGr a,
-                                -- | The expected roots in the graph.
+                               -- | The expected roots in the graph.
                                wantedRoots :: LNGroup a
                              }
                    deriving (Show)
