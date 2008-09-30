@@ -258,7 +258,7 @@ sortMinMax as = (as',aMin,aMax)
 --   in as much of a square shape as possible.
 blockPrint    :: (Show a) => [a] -> String
 blockPrint as = init -- Remove the final '\n' on the end.
-                . unlines $ map unwords lns
+                . unlines $ map unwords' lns
     where
       las = addLengths $ map show as
       -- Scale this, to take into account the height:width ratio.
@@ -267,6 +267,15 @@ blockPrint as = init -- Remove the final '\n' on the end.
       slen = round sidelen
       serr = round $ sidelen/10
       lns = unfoldr (takeLen slen serr) las
+      unwords' = concat . intersperse blockSep
+
+-- | Added between elements in a row of the block.
+blockSep :: String
+blockSep = ", "
+
+-- | Size of the spacer.
+blockSepLength :: Int
+blockSepLength = length blockSep
 
 -- | Using the given line length and allowed error, take the elements of
 --   the next line.
@@ -278,8 +287,8 @@ takeLen len err ((l,a):als) = Just lr
       lr = if l > len
            then ([a],als) -- Overflow line of single item
            else (a:as,als')
-      -- We subtract one here to take into account the space.
-      (as,als') = takeLine (lmax - l - 1) als
+      -- We subtract blockSepLength here to take into account the spacer.
+      (as,als') = takeLine (lmax - l - blockSepLength) als
 
 -- | Recursively build the rest of the line with given maximum length.
 takeLine :: Int -> [(Int,String)] -> ([String],[(Int,String)])
@@ -291,7 +300,8 @@ takeLine len als
     | otherwise = (a:as,als'')
     where
       ((l,a):als') = als
-      len' = len - l - 1 -- Subtract 1 to account for the space
+      -- We subtract blockSepLength here to take into account the spacer.
+      len' = len - l - blockSepLength
       (as,als'') = takeLine len' als'
 
 {- |
