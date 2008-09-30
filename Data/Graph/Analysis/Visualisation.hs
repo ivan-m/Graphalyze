@@ -5,16 +5,48 @@
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 
-   A wrapper module around the Haskell "Data.GraphViz" library to
-   turn Graphs into basic graphs for processing by the Graphviz
-   application.
+   Functions to assist in visualising graphs and components of graphs.
+   This module uses code licensed under the 3-Clause BSD license from
+   the /mohws/ project:
+   <http://code.haskell.org/mohws/src/Util.hs>
  -}
-module Data.Graph.Analysis.Visualisation where
+module Data.Graph.Analysis.Visualisation
+    ( -- * Graph visualisation
+      -- $graphviz
+      -- ** Producing 'DotGraph's
+      graphviz,
+      graphvizClusters,
+      -- ** Creating images
+      GraphvizOutput(..),
+      GraphvizCommand(..),
+      runGraphviz,
+      runGraphvizCommand
+    ) where
+
+import Prelude hiding (catch)
+
+import Data.Graph.Analysis.Testing
 
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 import Data.Graph.Inductive.Graph
 import Data.GraphViz
+import System.FilePath
+import System.IO
+import System.Directory
+import System.Exit
+import System.Process
+import Data.Array.IO
+import Control.Concurrent
+import Control.Exception
+
+-- -----------------------------------------------------------------------------
+
+{- $graphviz
+   Simple wrappers around the Haskell "Data.GraphViz" library to
+   turn 'Graph's into basic 'DotGraph's for processing by the Graphviz
+   application.
+-}
 
 -- | Turns the graph into 'DotGraph' format with the given title.
 --   Nodes are labelled, edges aren't.
@@ -36,3 +68,149 @@ graphvizClusters t g = clusterGraphToDot g atts assignCluster catts natts eatts
       catts c = [Label (show c)]
       natts (_,a) = [Label (nodelabel a)]
       eatts _ = []
+
+-- | The possible Graphviz outputs, obtained by running /dot -Txxx/.
+--   Note that it is not possible to choose between output variants,
+--   and that not all of these may be available on your system.
+data GraphvizOutput = Canon
+                    | Cmap
+                    | Cmapx
+                    | Cmapx_np
+                    | Dia
+                    | DotOutput
+                    | Eps
+                    | Fig
+                    | Gd
+                    | Gd2
+                    | Gif
+                    | Gtk
+                    | Hpgl
+                    | Imap
+                    | Imap_np
+                    | Ismap
+                    | Jpe
+                    | Jpeg
+                    | Jpg
+                    | Mif
+                    | Mp
+                    | Pcl
+                    | Pdf
+                    | Pic
+                    | Plain
+                    | PlainExt
+                    | Png
+                    | Ps
+                    | Ps2
+                    | Svg
+                    | Svgz
+                    | Tk
+                    | Vml
+                    | Vmlz
+                    | Vrml
+                    | Vtx
+                    | Wbmp
+                    | Xdot
+                    | Xlib
+
+instance Show GraphvizOutput where
+    show Canon     = "canon"
+    show Cmap      = "cmap"
+    show Cmapx     = "cmapx"
+    show Cmapx_np  = "cmapx_np"
+    show Dia       = "dia"
+    show DotOutput = "dot"
+    show Eps       = "eps"
+    show Fig       = "fig"
+    show Gd        = "gd"
+    show Gd2       = "gd2"
+    show Gif       = "gif"
+    show Gtk       = "gtk"
+    show Hpgl      = "hpgl"
+    show Imap      = "imap"
+    show Imap_np   = "imap_np"
+    show Ismap     = "ismap"
+    show Jpe       = "jpe"
+    show Jpeg      = "jpeg"
+    show Jpg       = "jpg"
+    show Mif       = "mif"
+    show Mp        = "mp"
+    show Pcl       = "pcl"
+    show Pdf       = "pdf"
+    show Pic       = "pic"
+    show Plain     = "plain"
+    show PlainExt  = "plain-ext"
+    show Png       = "png"
+    show Ps        = "ps"
+    show Ps2       = "ps2"
+    show Svg       = "svg"
+    show Svgz      = "svgz"
+    show Tk        = "tk"
+    show Vml       = "vml"
+    show Vmlz      = "vmlz"
+    show Vrml      = "vrml"
+    show Vtx       = "vtx"
+    show Wbmp      = "wbmp"
+    show Xdot      = "xdot"
+    show Xlib      = "xlib"
+
+-- | The available Graphviz commands.
+data GraphvizCommand = DotCmd | Neato | TwoPi | Circo | Fdp
+
+instance Show GraphvizCommand where
+    show DotCmd = "dot"
+    show Neato  = "neato"
+    show TwoPi  = "twopi"
+    show Circo  = "circo"
+    show Fdp    = "fdp"
+
+-- | Run the recommended Graphviz command on this graph.
+runGraphviz         :: DotGraph -> GraphvizOutput -> FilePath -> IO Bool
+runGraphviz gr t fp = runGraphvizInternal (commandFor gr) gr t fp
+
+-- | Run the chosen Graphviz command on this graph.
+runGraphvizCommand             :: GraphvizCommand -> DotGraph -> GraphvizOutput
+                               -> FilePath -> IO Bool
+runGraphvizCommand cmd gr t fp = runGraphvizInternal (show cmd) gr t fp
+
+-- | This command should /not/ be available outside this module, as
+--   it isn't safe: running an arbitrary command will crash the program.
+runGraphvizInternal :: String -> DotGraph -> GraphvizOutput -> FilePath
+                    -> IO Bool
+runGraphvizInternal cmd gr t fp
+    = do (inp, outp, errp, proc) <- runInteractiveCommand command
+         forkIO $ hPrint inp gr >> hClose inp
+         forkIO $ (hGetContents errp >>= hPutStr stderr >> hClose errp)
+         pipe <- try $ openFile fp WriteMode
+         case pipe of
+           (Left _)  -> return False
+           (Right f) -> do squirt outp f
+                           hClose outp
+                           hClose f
+                           exitCode <- waitForProcess proc
+                           return (exitCode == ExitSuccess)
+    where
+      command = cmd ++ " -T" ++ (show t)
+
+{- |
+   This function is taken from the /mohws/ project, available under a
+   3-Clause BSD license.  The actual function is taken from:
+   <http://code.haskell.org/mohws/src/Util.hs>
+   It provides an efficient way of transferring data from one 'Handle'
+   to another.
+ -}
+squirt :: Handle -> Handle -> IO ()
+squirt rd wr = do
+  arr <- newArray_ (0, bufsize-1)
+  let loop = do
+        r <- hGetArray rd arr bufsize
+        if (r == 0)
+          then return ()
+          else if (r < bufsize)
+                then hPutArray wr arr r
+                else hPutArray wr arr bufsize >> loop
+  loop
+    where
+      -- This was originally separate
+      bufsize :: Int
+      bufsize = 4 * 1024
+
