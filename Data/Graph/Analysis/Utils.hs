@@ -42,6 +42,7 @@ module Data.Graph.Analysis.Utils
       -- * List functions
       single,
       longerThan,
+      addLengths,
       longest,
       groupElems,
       sortMinMax,
@@ -222,12 +223,14 @@ single  _  = False
 longerThan   :: Int -> [a] -> Bool
 longerThan n = not . null . drop n
 
+-- | Add the length of each sublist.
+addLengths :: [[a]] -> [(Int,[a])]
+addLengths = map ( \ as -> (length as, as))
+
 -- | Returns the longest list in a list of lists.
 longest :: [[a]] -> [a]
 longest = snd . maximumBy (compare `on` fst)
-          . map addLength
-    where
-      addLength xs = (length xs,xs)
+          . addLengths
 
 -- | Group elements by the given grouping function.
 groupElems   :: (Ord b) => (a -> b) -> [a] -> [(b,[a])]
@@ -257,20 +260,19 @@ blockPrint    :: (Show a) => [a] -> String
 blockPrint as = init -- Remove the final '\n' on the end.
                 . unlines $ map unwords lns
     where
-      showl a = let sa = show a in (sa, length sa)
-      las = map showl as
+      las = addLengths $ map show as
       -- Scale this, to take into account the height:width ratio.
       sidelen :: Double -- Suppress defaulting messages
-      sidelen = (1.75*) . sqrt . fromIntegral . sum $ map snd las
+      sidelen = (1.75*) . sqrt . fromIntegral . sum $ map fst las
       slen = round sidelen
       serr = round $ sidelen/10
       lns = unfoldr (takeLen slen serr) las
 
 -- | Using the given line length and allowed error, take the elements of
 --   the next line.
-takeLen :: Int -> Int -> [(String,Int)] -> Maybe ([String],[(String,Int)])
+takeLen :: Int -> Int -> [(Int,String)] -> Maybe ([String],[(Int,String)])
 takeLen _   _   []          = Nothing
-takeLen len err ((a,l):als) = Just lr
+takeLen len err ((l,a):als) = Just lr
     where
       lmax = len + err
       lr = if l > len
@@ -280,7 +282,7 @@ takeLen len err ((a,l):als) = Just lr
       (as,als') = takeLine (lmax - l - 1) als
 
 -- | Recursively build the rest of the line with given maximum length.
-takeLine :: Int -> [(String,Int)] -> ([String],[(String,Int)])
+takeLine :: Int -> [(Int,String)] -> ([String],[(Int,String)])
 takeLine len als
     | null als  = ([],als)
     | len <= 0  = ([],als) -- This should be covered by the next guard,
@@ -288,7 +290,7 @@ takeLine len als
     | l > len   = ([],als)
     | otherwise = (a:as,als'')
     where
-      ((a,l):als') = als
+      ((l,a):als') = als
       len' = len - l - 1 -- Subtract 1 to account for the space
       (as,als'') = takeLine len' als'
 
