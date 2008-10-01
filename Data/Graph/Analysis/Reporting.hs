@@ -49,7 +49,7 @@ data Document = Doc { -- | Document location
                       author        :: String,
                       date          :: String,
                       -- | Main-matter
-                      content       :: [DocElements]
+                      content       :: [DocElement]
                     }
 
 -- | Represents the class of document generators.
@@ -69,13 +69,16 @@ instance Show Location where
     show (File fp) = fp
 
 -- | Elements of a document.
-data DocElements = Section String [DocElements]
-                 | Paragraph String
-                 | Text String
-                 | Enumeration [DocElements]
-                 | Itemized [DocElements]
-                 | Link String Location
-                 | Image String Location
+data DocElement = Section DocElement [DocElement]
+                | Paragraph [DocElement]
+                | Text String
+                | Bold DocElement
+                | Emphasis DocElemen
+                | Enumeration [DocElement]
+                | Itemized [DocElement]
+                | Definition DocElement DocElement
+                | Link DocElement Location
+                | Image DocElement Location
 
 -- -----------------------------------------------------------------------------
 
