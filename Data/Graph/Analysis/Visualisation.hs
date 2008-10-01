@@ -28,15 +28,14 @@ module Data.Graph.Analysis.Visualisation
       showNodes
     ) where
 
-import Prelude hiding (catch)
+import Prelude
 
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 import Data.Graph.Inductive.Graph
 import Data.GraphViz
-import System.FilePath
+
 import System.IO
-import System.Directory
 import System.Exit
 import System.Process
 import Data.Array.IO
