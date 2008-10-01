@@ -25,6 +25,7 @@ module Data.Graph.Analysis.Reporting
 
 import Data.Graph.Analysis.Utils
 
+import Data.List
 import Data.Time
 import Control.Exception
 import System.Directory
@@ -126,3 +127,26 @@ lengthAnalysis as = (av,stdDev,as'')
       ls = map fst as'
       (av,stdDev) = statistics' ls
       as'' = filter (\(l,_) -> l > (av+stdDev)) as'
+
+{- |
+   Compare the actual roots in the graph with those that are expected
+   (i.e. those in 'wantedRoots').  Returns (in order):
+
+   * Those roots that are expected (i.e. elements of 'wantedRoots'
+     that are roots).
+
+   * Those roots that are expected but not present (i.e. elements of
+     'wantedRoots' that /aren't/ roots.
+
+   * Unexpected roots (i.e. those roots that aren't present in
+     'wantedRoots').
+ -}
+classifyRoots    :: (Eq a) => GraphData a -> ([LNode a], [LNode a], [LNode a])
+classifyRoots gd = (areWanted, notRoots, notWanted)
+    where
+      g = graph gd
+      wntd = wantedRoots gd
+      roots = rootsOf g
+      areWanted = intersect wntd roots
+      notRoots = wntd \\ roots
+      notWanted = roots \\ wntd

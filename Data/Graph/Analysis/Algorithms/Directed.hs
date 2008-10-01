@@ -87,19 +87,6 @@ isRoot = endNode pre
 isRoot' :: (Graph g) => g a b -> Node -> Bool
 isRoot' = endNode' pre
 
-{-
-classifyRoots    :: (Eq a) => GraphData a -> (Maybe (LNode a), LNGroup a)
-classifyRoots gr = first listToMaybe $ partition isWanted roots
-    where
-      roots = findRoots gr
-      theRoot = wantedRoot gr
-      isWanted = maybe (const False) (==) theRoot
-
-wantedRootExists :: (Eq a) => GraphData a -> Bool
-wantedRootExists = isJust . fst . classifyRoots
--}
-
-
 -- -----------------------------------------------------------------------------
 
 {-
