@@ -20,7 +20,12 @@ module Data.Graph.Analysis.Visualisation
       GraphvizOutput(..),
       GraphvizCommand(..),
       runGraphviz,
-      runGraphvizCommand
+      runGraphvizCommand,
+      -- * Showing node groupings
+      -- $other
+      showPath,
+      showCycle,
+      showNodes
     ) where
 
 import Prelude hiding (catch)
@@ -161,11 +166,13 @@ instance Show GraphvizCommand where
     show Circo  = "circo"
     show Fdp    = "fdp"
 
--- | Run the recommended Graphviz command on this graph.
+-- | Run the recommended Graphviz command on this graph, saving the result
+--   to the file provided (note: file extensions are /not/ checked).
 runGraphviz         :: DotGraph -> GraphvizOutput -> FilePath -> IO Bool
 runGraphviz gr t fp = runGraphvizInternal (commandFor gr) gr t fp
 
--- | Run the chosen Graphviz command on this graph.
+-- | Run the chosen Graphviz command on this graph, saving the result
+--   to the file provided (note: file extensions are /not/ checked).
 runGraphvizCommand             :: GraphvizCommand -> DotGraph -> GraphvizOutput
                                -> FilePath -> IO Bool
 runGraphvizCommand cmd gr t fp = runGraphvizInternal (show cmd) gr t fp
@@ -212,3 +219,28 @@ squirt rd wr = do
       bufsize :: Int
       bufsize = 4 * 1024
 
+-- -----------------------------------------------------------------------------
+
+{- $other
+   Other visualisations.  These are mainly replacements for
+   the @show@ function.
+ -}
+
+-- | Print a path, with \"->\" between each element.
+showPath     :: (Show a) => LNGroup a -> String
+showPath []  = ""
+showPath lns = blockPrint (l:ls')
+    where
+      -- Can't use blockPrintWith above, as it only takes a per-row spacer.
+      (l:ls) = map label lns
+      ls' = map ("-> "++) ls
+
+-- | Print a cycle: copies the first node to the end of the list,
+--   and then calls 'showPath'.
+showCycle            ::(Show a) => LNGroup a -> String
+showCycle []         = ""
+showCycle lns@(ln:_) = showPath (lns ++ [ln])
+
+-- | Show a group of nodes, with no implicit ordering.
+showNodes :: (Show a) => LNGroup a -> String
+showNodes = blockPrintList . map label

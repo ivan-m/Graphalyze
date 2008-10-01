@@ -27,6 +27,7 @@ module Data.Graph.Analysis.Algorithms.Clustering
 
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
+import Data.Graph.Visualisation(showNodes)
 import Data.Graph.Analysis.Algorithms.Common
 import Data.Graph.Analysis.Algorithms.Directed(rootsOf')
 
@@ -313,7 +314,7 @@ data CNodes a = CN [LNode a]
 --   nodes in Graphviz roughly circular, rather than one long ellipse.
 instance (Show a) => Show (CNodes a) where
     -- Print the labels in a roughly square shape.
-    show (CN lns) = blockPrintList $ map label lns
+    show (CN lns) = showNodes lns
 
 collapseGraph   :: (DynGraph gr, Eq b) => gr a b -> gr (CNodes a) b
 collapseGraph g = foldl' (flip collapseAllBy) cg interestingParts
