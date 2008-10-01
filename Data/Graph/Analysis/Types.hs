@@ -17,8 +17,6 @@ module Data.Graph.Analysis.Types
       GraphData(..),
       Gr,
       AGr,
-      Node,
-      LNode,
       NGroup,
       LNGroup,
       -- * Graph Label classes

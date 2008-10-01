@@ -18,14 +18,7 @@ module Data.Graph.Analysis.Reporting
       -- $utilities
       today,
       tryCreateDirectory
-      -- * Result analysis
-      -- $analfuncts
-      -- hello
     ) where
-
-import Data.Graph.Analysis.Types
-import Data.Graph.Analysis.Utils
-import Data.Graph.Analysis.Algorithms.Directed(rootsOf)
 
 import Data.List
 import Data.Time
@@ -112,43 +105,3 @@ tryCreateDirectory fp = do r <- try $ mkDir fp
       mkDir = createDirectoryIfMissing True
       isRight (Right _) = True
       isRight _         = False
-
--- -----------------------------------------------------------------------------
-
-{- $analfuncts
-   Extra functions for data analysis.
- -}
-
--- | Returns the mean and standard deviations of the lengths of the sublists,
---   as well all those lists more than one standard deviation longer than
---   the mean.
-lengthAnalysis    :: [[a]] -> (Int,Int,[(Int,[a])])
-lengthAnalysis as = (av,stdDev,as'')
-    where
-      as' = addLengths as
-      ls = map fst as'
-      (av,stdDev) = statistics' ls
-      as'' = filter (\(l,_) -> l > (av+stdDev)) as'
-
-{- |
-   Compare the actual roots in the graph with those that are expected
-   (i.e. those in 'wantedRoots').  Returns (in order):
-
-   * Those roots that are expected (i.e. elements of 'wantedRoots'
-     that are roots).
-
-   * Those roots that are expected but not present (i.e. elements of
-     'wantedRoots' that /aren't/ roots.
-
-   * Unexpected roots (i.e. those roots that aren't present in
-     'wantedRoots').
- -}
-classifyRoots    :: (Eq a) => GraphData a -> ([LNode a], [LNode a], [LNode a])
-classifyRoots gd = (areWanted, notRoots, notWanted)
-    where
-      g = graph gd
-      wntd = wantedRoots gd
-      roots = rootsOf g
-      areWanted = intersect wntd roots
-      notRoots = wntd \\ roots
-      notWanted = roots \\ wntd
