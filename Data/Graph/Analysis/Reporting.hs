@@ -17,12 +17,19 @@ module Data.Graph.Analysis.Reporting
       -- * Helper functions
       -- $utilities
       today,
+      tryCreateDirectory
+      -- * Result analysis
+      -- $analfuncts
       -- hello
     ) where
 
+import Data.Graph.Analysis.Utils
+
 import Data.Time
-import System.Locale
+import Control.Exception
+import System.Directory
 import System.FilePath
+import System.Locale
 
 -- -----------------------------------------------------------------------------
 
@@ -35,9 +42,8 @@ import System.FilePath
 
 {- | Representation of a document.  The document is to be stored in
    the directory 'rootDirectory', and the main file is to have a
-   filename of @'fileFront' ++ 'docExtension'@, where the value of
-   'docExtension' depends on which instance of 'DocumentGenerator' is
-   used.
+   filename of @'fileFront' ++ 'docExtension' dg@, where @dg@ is an
+   instance of 'DocumentGenerator'.
  -}
 data Document = Doc { -- | Document location
                       rootDirectory :: FilePath,
@@ -54,10 +60,10 @@ data Document = Doc { -- | Document location
 class DocumentGenerator dg where
     -- | Convert idealised 'Document' values into actual documents,
     --   returning a list of all files created.
-    createDocument :: Document -> IO ([FilePath])
+    createDocument :: dg -> Document -> IO ([FilePath])
     -- | The extension of all document-style files created.  Note that
     --   this doesn't preclude the creation of other files, e.g. images.
-    docExtension   :: String
+    docExtension   :: dg -> String
 
 -- | Representation of a location, either on the internet or locally.
 data Location = URL String | File FilePath
@@ -92,3 +98,31 @@ today = do zoneT <- getZonedTime
     where
       locale = defaultTimeLocale
       fmt = "%A %e %B, %Y"
+
+-- | Attempts to create the specified directly, returning @True@
+--   if successful (or if the directory already exists), @False@
+--   if an error occurred.
+tryCreateDirectory    :: FilePath -> IO Bool
+tryCreateDirectory fp = do r <- try $ mkDir fp
+                           return (isRight r)
+    where
+      mkDir = createDirectoryIfMissing True
+      isRight (Right _) = True
+      isRight _         = False
+
+-- -----------------------------------------------------------------------------
+
+{- $analfuncts
+   Extra functions for data analysis.
+ -}
+
+-- | Returns the mean and standard deviations of the lengths of the sublists,
+--   as well all those lists more than one standard deviation longer than
+--   the mean.
+lengthAnalysis    :: [[a]] -> (Int,Int,[(Int,[a])])
+lengthAnalysis as = (av,stdDev,as'')
+    where
+      as' = addLengths as
+      ls = map fst as'
+      (av,stdDev) = statistics' ls
+      as'' = filter (\(l,_) -> l > (av+stdDev)) as'
