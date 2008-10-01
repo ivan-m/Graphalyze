@@ -27,7 +27,7 @@ module Data.Graph.Analysis.Algorithms.Clustering
 
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
-import Data.Graph.Visualisation(showNodes)
+import Data.Graph.Analysis.Visualisation(showNodes)
 import Data.Graph.Analysis.Algorithms.Common
 import Data.Graph.Analysis.Algorithms.Directed(rootsOf')
 
