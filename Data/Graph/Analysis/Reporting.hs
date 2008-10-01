@@ -23,7 +23,9 @@ module Data.Graph.Analysis.Reporting
       -- hello
     ) where
 
+import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
+import Data.Graph.Analysis.Algorithms.Directed(rootsOf)
 
 import Data.List
 import Data.Time
