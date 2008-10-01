@@ -229,10 +229,10 @@ squirt rd wr = do
 -- | Print a path, with \"->\" between each element.
 showPath     :: (Show a) => LNGroup a -> String
 showPath []  = ""
-showPath lns = blockPrint (l:ls')
+showPath lns = blockPrint' (l:ls')
     where
       -- Can't use blockPrintWith above, as it only takes a per-row spacer.
-      (l:ls) = map label lns
+      (l:ls) = map (show . label) lns
       ls' = map ("-> "++) ls
 
 -- | Print a cycle: copies the first node to the end of the list,

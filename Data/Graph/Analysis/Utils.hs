@@ -47,8 +47,11 @@ module Data.Graph.Analysis.Utils
       groupElems,
       sortMinMax,
       blockPrint,
+      blockPrint',
       blockPrintList,
+      blockPrintList',
       blockPrintWith,
+      blockPrintWith',
       shuffle,
       -- * Statistics functions
       mean,
@@ -262,21 +265,38 @@ sortMinMax as = (as',aMin,aMax)
 blockPrint :: (Show a) => [a] -> String
 blockPrint = blockPrintWith " "
 
+-- | Attempt to convert a list of @String@s into a single @String@
+--   that is roughly a square shape, with a single space as a row
+--   separator.
+blockPrint' :: [String] -> String
+blockPrint' = blockPrintWith' " "
+
 -- | Attempt to convert the @String@ form of a list into
 --   as much of a square shape as possible, separating values
 --   with commas.
 blockPrintList :: (Show a) => [a] -> String
 blockPrintList = blockPrintWith ",  "
 
+-- | Attempt to combine a list of @String@s into as much of a
+--   square shape as possible, separating values with commas.
+blockPrintList' :: [String] -> String
+blockPrintList' = blockPrintWith' ",  "
+
 -- | Attempt to convert the @String@ form of a list into
 --   as much of a square shape as possible, using the given
 --   separation string between elements in the same row.
-blockPrintWith        :: (Show a) => String -> [a] -> String
-blockPrintWith sep as = init -- Remove the final '\n' on the end.
-                        . unlines $ map unwords' lns
+blockPrintWith     :: (Show a) => String -> [a] -> String
+blockPrintWith str = blockPrintWith' str . map show
+
+-- | Attempt to convert the combined form of a list of @String@s
+--   into as much of a square shape as possible, using the given
+--   separation string between elements in the same row.
+blockPrintWith'        :: String -> [String] -> String
+blockPrintWith' sep as = init -- Remove the final '\n' on the end.
+                         . unlines $ map unwords' lns
     where
       lsep = length sep
-      las = addLengths $ map show as
+      las = addLengths as
       -- Scale this, to take into account the height:width ratio.
       sidelen :: Double -- Suppress defaulting messages
       sidelen = (1.75*) . sqrt . fromIntegral . sum $ map fst las
