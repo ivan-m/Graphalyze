@@ -21,6 +21,8 @@ module Data.Graph.Analysis.Visualisation
       GraphvizCommand(..),
       runGraphviz,
       runGraphvizCommand,
+      -- ** Parsing 'DotGraph's
+      parseGraphviz,
       -- * Showing node groupings
       -- $other
       showPath,
@@ -181,19 +183,14 @@ runGraphvizCommand cmd gr t fp = runGraphvizInternal (show cmd) gr t fp
 runGraphvizInternal :: String -> DotGraph -> GraphvizOutput -> FilePath
                     -> IO Bool
 runGraphvizInternal cmd gr t fp
-    = do (inp, outp, errp, proc) <- runInteractiveCommand command
-         forkIO $ hPrint inp gr >> hClose inp
-         forkIO $ (hGetContents errp >>= hPutStr stderr >> hClose errp)
-         pipe <- try $ openFile fp WriteMode
+    = do pipe <- try $ openFile fp WriteMode
          case pipe of
            (Left _)  -> return False
-           (Right f) -> do squirt outp f
-                           hClose outp
+           (Right f) -> do file <- graphvizWithHandle cmd gr t (flip squirt f)
                            hClose f
-                           exitCode <- waitForProcess proc
-                           return (exitCode == ExitSuccess)
-    where
-      command = cmd ++ " -T" ++ (show t)
+                           case file of
+                             (Just _) -> return True
+                             _        -> return False
 
 {- |
    This function is taken from the /mohws/ project, available under a
@@ -217,6 +214,24 @@ squirt rd wr = do
       -- This was originally separate
       bufsize :: Int
       bufsize = 4 * 1024
+
+-- | Internal command to run Graphviz and process the output.
+--   This is /not/ to be made available outside this module.
+graphvizWithHandle :: (Show a) => String -> DotGraph -> GraphvizOutput -> (Handle -> IO a)
+                   -> IO (Maybe a)
+graphvizWithHandle cmd gr t f
+    = do (inp, outp, errp, proc) <- runInteractiveCommand command
+         forkIO $ hPrint inp gr >> hClose inp
+         forkIO $ (hGetContents errp >>= hPutStr stderr >> hClose errp)
+         a <- f outp
+         -- Don't close outp until f finishes.
+         a `seq` hClose outp
+         exitCode <- waitForProcess proc
+         case exitCode of
+           ExitSuccess -> return (Just a)
+           _           -> return Nothing
+    where
+      command = cmd ++ " -T" ++ (show t)
 
 -- -----------------------------------------------------------------------------
 
