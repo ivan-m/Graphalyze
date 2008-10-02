@@ -17,29 +17,117 @@
    (search for /FreeBSD License/, which is another name for it).
  -}
 module Data.Graph.Analysis.Reporting.Pandoc
-    (
-
+    ( PandocDocument,
+      pandocHtml,
+      pandocLaTeX,
+      pandocRtf,
+      pandocMarkdown
     ) where
+
+-- TODO : the ability to create multiple files.
 
 import Data.Graph.Analysis.Reporting
 
 import Data.List
 import Data.Maybe
-import Text.Pandoc.Definition
+import Text.Pandoc
 import Control.Monad
+import Control.Exception
+import System.Directory
+import System.FilePath
 
-loc2target             :: Location -> Target
-loc2target (URL url)   = (url,"")
-loc2target (File file) = (file,"")
+-- -----------------------------------------------------------------------------
 
--- data PandocReport = PD {
+{- $writers
+   The actual exported writers.
+ -}
 
+pandocHtml :: PandocDocument
+pandocHtml = PD { writer    = writeHtmlString
+                , extension = "html"
+                , header    = "" -- Header will be included
+                }
+
+pandocLaTeX :: PandocDocument
+pandocLaTeX = PD { writer    = writeLaTeX
+                 , extension = "tex"
+                 , header    = defaultLaTeXHeader
+                 }
+
+pandocRtf :: PandocDocument
+pandocRtf = PD { writer    = writeRTF
+               , extension = "rtf"
+               , header    = defaultRTFHeader
+               }
+
+pandocMarkdown :: PandocDocument
+pandocMarkdown = PD { writer = writeMarkdown
+                    , extension = "text"
+                    , header = ""
+                    }
+
+-- -----------------------------------------------------------------------------
+
+{- $defs
+   Pandoc definition.
+ -}
+
+data PandocDocument = PD { writer :: WriterOptions -> Pandoc -> String
+                         , extension :: FilePath
+                         , header :: String
+                         }
+
+instance DocumentGenerator PandocDocument where
+    createDocument = createPandoc
+    docExtension   = extension
+
+-- | Define the 'WriterOptions' used.
+writerOptions :: WriterOptions
+writerOptions = defaultWriterOptions { writerStandalone = True
+                                     , writerTableOfContents = True
+                                     , writerNumberSections = True
+                                     }
+
+-- | Used when traversing the document structure.
 data PandocProcess = PP { secLevel :: Int
                         , filedir  :: FilePath
                         }
 
-pandocExt :: FilePath
-pandocExt = "md"
+-- | Start with a level 1 heading.
+defaultProcess :: PandocProcess
+defaultProcess = PP { secLevel = 1
+                    , filedir = ""
+                    }
+
+-- | Create the document.
+createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
+createPandoc p d = do created <- tryCreateDirectory dir
+                      if (not created)
+                         then fail
+                         else do elems <- multiElems pp (content d)
+                                 case elems of
+                                   Just es -> do let es' = htmlAuthDt : es
+                                                     pd = Pandoc meta es'
+                                                     doc = convert pd
+                                                 wr <- tryWrite doc
+                                                 case wr of
+                                                   (Right _) -> success
+                                                   (Left _)  -> fail
+                                   Nothing -> fail
+    where
+      dir = rootDirectory d
+      auth = author d
+      dt = date d
+      meta = makeMeta (title d) auth dt
+      -- Html output doesn't show date and auth anywhere by default.
+      htmlAuthDt = htmlInfo auth dt
+      pp = defaultProcess { filedir = dir }
+      opts = writerOptions { writerHeader = (header p) }
+      convert = (writer p) opts
+      file = dir </> (fileFront d) <.> (extension p)
+      tryWrite = try . writeFile file
+      success = return (Just file)
+      fail = removeDirectoryRecursive dir >> return Nothing
 
 -- -----------------------------------------------------------------------------
 
@@ -47,9 +135,27 @@ pandocExt = "md"
    Converting individual elements to their corresponding Pandoc types.
  -}
 
+-- | The meta information
+makeMeta       :: DocInline -> String -> String -> Meta
+makeMeta t a d = Meta (inlines t) [a] d
+
+-- | Html output doesn't show the author and date; use this to print it.
+htmlInfo           :: String -> String -> Block
+htmlInfo auth date = RawHtml html
+    where
+      heading = "<h1>Document Information</h1>"
+      html = unlines [heading,htmlize auth, htmlize date]
+      htmlize str = "<blockquote><p><em>" ++ str ++ "</em></p></blockquote>"
+
+-- | Link conversion
+loc2target             :: Location -> Target
+loc2target (URL url)   = (url,"")
+loc2target (File file) = (file,"")
+
 -- | Conversion of simple inline elements.
 inlines                   :: DocInline -> [Inline]
 inlines (Text str)        = intersperse Space $ map Str (words str)
+inlines BlankSpace        = [Space]
 inlines (Grouping grp)    = concat . intersperse [Space] $ map inlines grp
 inlines (Bold inl)        = [Strong (inlines inl)]
 inlines (Emphasis inl)    = [Emph (inlines inl)]
