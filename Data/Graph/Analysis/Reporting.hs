@@ -52,8 +52,8 @@ data Document = Doc { -- | Document location
                       fileFront     :: String,
                       -- | Pre-matter
                       title         :: DocInline,
-                      author        :: DocInline,
-                      date          :: DocInline,
+                      author        :: String,
+                      date          :: String,
                       -- | Main-matter
                       content       :: [DocElement]
                     }
