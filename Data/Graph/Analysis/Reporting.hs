@@ -15,6 +15,7 @@ module Data.Graph.Analysis.Reporting
       Location(..),
       DocElement(..),
       DocInline(..),
+      DocGraph,
       -- * Helper functions
       -- $utilities
       today,
@@ -119,6 +120,8 @@ tryCreateDirectory fp = do r <- try $ mkDir fp
       isRight (Right _) = True
       isRight _         = False
 
+-- | Attempts to creates a png file (with the given filename in the
+--   given directory) and - if successful - returns a 'DocImage' link.
 createGraph                :: FilePath -> DocGraph -> IO (Maybe DocElement)
 createGraph fp (fn,inl,dg) = do created <- runGraphviz dg output filename'
                                 if created
