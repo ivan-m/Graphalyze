@@ -103,7 +103,7 @@ defaultProcess = PP { secLevel = 1
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
 createPandoc p d = do created <- tryCreateDirectory dir
                       if (not created)
-                         then fail
+                         then failDoc
                          else do elems <- multiElems pp (content d)
                                  case elems of
                                    Just es -> do let es' = htmlAuthDt : es
@@ -112,8 +112,8 @@ createPandoc p d = do created <- tryCreateDirectory dir
                                                  wr <- tryWrite doc
                                                  case wr of
                                                    (Right _) -> success
-                                                   (Left _)  -> fail
-                                   Nothing -> fail
+                                                   (Left _)  -> failDoc
+                                   Nothing -> failDoc
     where
       dir = rootDirectory d
       auth = author d
@@ -127,7 +127,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
       file = dir </> (fileFront d) <.> (extension p)
       tryWrite = try . writeFile file
       success = return (Just file)
-      fail = removeDirectoryRecursive dir >> return Nothing
+      failDoc = removeDirectoryRecursive dir >> return Nothing
 
 -- -----------------------------------------------------------------------------
 
@@ -140,11 +140,11 @@ makeMeta       :: DocInline -> String -> String -> Meta
 makeMeta t a d = Meta (inlines t) [a] d
 
 -- | Html output doesn't show the author and date; use this to print it.
-htmlInfo           :: String -> String -> Block
-htmlInfo auth date = RawHtml html
+htmlInfo         :: String -> String -> Block
+htmlInfo auth dt = RawHtml html
     where
       heading = "<h1>Document Information</h1>"
-      html = unlines [heading,htmlize auth, htmlize date]
+      html = unlines [heading,htmlize auth, htmlize dt]
       htmlize str = "<blockquote><p><em>" ++ str ++ "</em></p></blockquote>"
 
 -- | Link conversion
@@ -199,8 +199,8 @@ elements _ (DocImage inl loc)  = do let img = Image (inlines inl)
                                                     (loc2target loc)
                                     return $ Just [Plain [img]]
 
-elements p (GraphImage dg)     = do elem <- createGraph (filedir p) dg
-                                    case elem of
+elements p (GraphImage dg)     = do el <- createGraph (filedir p) dg
+                                    case el of
                                       Nothing  -> return Nothing
                                       Just img -> elements p img
 
