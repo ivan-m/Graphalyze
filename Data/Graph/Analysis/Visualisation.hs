@@ -21,8 +21,6 @@ module Data.Graph.Analysis.Visualisation
       GraphvizCommand(..),
       runGraphviz,
       runGraphvizCommand,
-      -- ** Parsing 'DotGraph's
-      parseGraphviz,
       -- * Showing node groupings
       -- $other
       showPath,
