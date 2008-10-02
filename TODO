@@ -2,8 +2,13 @@ TODO for Graphalyze
 ===================
 
 * Report framework
-  * Develop the outline of a rport document
-  * Implement a way of turning that report into text
+    * Extend the report framework
+    * Explore options for generating multiple files
+    * Differentiate between "large" and "small" images
+    * The pandoc code (especially elements) is a bit of a mess... can it be cleaned up?
+
+* Analysis stuff
+    * Default graph -> alg -> report element stuff
 
 * Write a README
 
