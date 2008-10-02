@@ -305,14 +305,6 @@ blockPrintWith' sep as = init -- Remove the final '\n' on the end.
       lns = unfoldr (takeLen slen serr lsep) las
       unwords' = concat . intersperse sep
 
--- | Added between elements in a row of the block.
-blockSep :: String
-blockSep = ", "
-
--- | Size of the spacer.
-blockSepLength :: Int
-blockSepLength = length blockSep
-
 -- | Using the given line length and allowed error, take the elements of
 --   the next line.
 takeLen                          :: Int -> Int -> Int -> [(Int,String)]
