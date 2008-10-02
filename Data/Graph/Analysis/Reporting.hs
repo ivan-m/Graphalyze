@@ -61,8 +61,8 @@ data Document = Doc { -- | Document location
 -- | Represents the class of document generators.
 class DocumentGenerator dg where
     -- | Convert idealised 'Document' values into actual documents,
-    --   returning a list of all files created.
-    createDocument :: dg -> Document -> IO ([FilePath])
+    --   returning the file created.
+    createDocument :: dg -> Document -> IO (Maybe FilePath)
     -- | The extension of all document-style files created.  Note that
     --   this doesn't preclude the creation of other files, e.g. images.
     docExtension   :: dg -> String
@@ -84,6 +84,7 @@ data DocElement = Section DocInline [DocElement]
                 | GraphImage DocGraph
 
 data DocInline = Text String
+               | BlankSpace
                | Grouping [DocInline]
                | Bold DocInline
                | Emphasis DocInline
