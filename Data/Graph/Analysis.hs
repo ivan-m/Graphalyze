@@ -18,6 +18,7 @@ module Data.Graph.Analysis
       module Data.Graph.Analysis.Types,
       module Data.Graph.Analysis.Utils,
       module Data.Graph.Analysis.Algorithms,
+      module Data.Graph.Analysis.Reporting,
       module Data.Graph.Inductive.Graph,
       -- * Importing data
       ImportParams(..),
@@ -32,6 +33,7 @@ module Data.Graph.Analysis
 import Data.Graph.Analysis.Utils
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Algorithms
+import Data.Graph.Analysis.Reporting
 
 import Data.Graph.Inductive.Graph
 import Data.List
