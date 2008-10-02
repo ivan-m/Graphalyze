@@ -44,6 +44,9 @@ import Data.Array.IO
 import Control.Concurrent
 import Control.Exception
 
+-- Import this when the parsing stuff is finished
+-- import Text.ParserCombinators.PolyLazy
+
 -- -----------------------------------------------------------------------------
 
 {- $graphviz
@@ -214,6 +217,31 @@ squirt rd wr = do
       -- This was originally separate
       bufsize :: Int
       bufsize = 4 * 1024
+
+{-
+
+-- Parsing to get graph size... do this later.
+
+parseGraphviz    :: DotGraph -> IO (Maybe DotGraph)
+parseGraphviz gr = parseGraphvizInternal (commandFor gr) gr
+
+graphvizSizeInternal        :: String -> DotGraph -> Maybe (Int,Int)
+graphvizSizeInternal cmd gr =
+    where
+      parsed = parseGraphvizInternal cmd gr
+      getBB = maybe Nothing (find
+      bb2Rect (Bb r) = r
+      rectToSize (Rect _ (Point x y)) = (x,y)
+
+-- | Internal parsing command.
+parseGraphvizInternal        :: String -> DotGraph -> IO (Maybe DotGraph)
+parseGraphvizInternal cmd gr = graphvizWithHandle cmd gr DotOutput parse
+    where
+      parse h = do res <- hGetContents h
+                   let gr' = fst $ runParser readDotGraph res
+                   return gr'
+
+-}
 
 -- | Internal command to run Graphviz and process the output.
 --   This is /not/ to be made available outside this module.
