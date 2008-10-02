@@ -79,14 +79,14 @@ data DocElement = Section DocInline [DocElement]
                 | Enumeration [DocElement]
                 | Itemized [DocElement]
                 | Definition DocInline DocElement
+                | DocImage DocInline Location
+                | GraphImage DocGraph
 
 data DocInline = Text String
                | Grouping [DocInline]
                | Bold DocInline
                | Emphasis DocInline
                | DocLink DocInline Location
-               | DocImage DocInline Location
-               | GraphImage DocGraph
 
 type DocGraph = (FilePath,DocInline,DotGraph)
 
@@ -119,7 +119,7 @@ tryCreateDirectory fp = do r <- try $ mkDir fp
       isRight (Right _) = True
       isRight _         = False
 
-createGraph                :: FilePath -> DocGraph -> IO (Maybe DocInline)
+createGraph                :: FilePath -> DocGraph -> IO (Maybe DocElement)
 createGraph fp (fn,inl,dg) = do created <- runGraphviz dg output filename'
                                 if created
                                    then return (Just img)
