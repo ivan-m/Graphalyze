@@ -143,7 +143,7 @@ classifyRoots gd = (areWanted, notRoots, notWanted)
     where
       g = graph gd
       wntd = wantedRoots gd
-      roots = rootsOf g
-      areWanted = intersect wntd roots
-      notRoots = wntd \\ roots
-      notWanted = roots \\ wntd
+      rts = rootsOf g
+      areWanted = intersect wntd rts
+      notRoots = wntd \\ rts
+      notWanted = rts \\ wntd

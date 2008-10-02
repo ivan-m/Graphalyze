@@ -309,7 +309,7 @@ blockPrintWith' sep as = init -- Remove the final '\n' on the end.
 --   the next line.
 takeLen                          :: Int -> Int -> Int -> [(Int,String)]
                                  -> Maybe ([String],[(Int,String)])
-takeLen _   _   lsep []          = Nothing
+takeLen _   _   _    []          = Nothing
 takeLen len err lsep ((l,a):als) = Just lr
     where
       lmax = len + err

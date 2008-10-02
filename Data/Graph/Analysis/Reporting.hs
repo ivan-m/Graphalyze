@@ -26,7 +26,6 @@ module Data.Graph.Analysis.Reporting
 import Data.GraphViz
 import Data.Graph.Analysis.Visualisation
 
-import Data.List
 import Data.Time
 import Control.Exception
 import System.Directory
@@ -104,8 +103,7 @@ type DocGraph = (FilePath,DocInline,DotGraph)
 today :: IO String
 today = do zoneT <- getZonedTime
            let localT = zonedTimeToLocalTime zoneT
-               date = formatTime locale fmt localT
-           return date
+           return $ formatTime locale fmt localT
     where
       locale = defaultTimeLocale
       fmt = "%A %e %B, %Y"
