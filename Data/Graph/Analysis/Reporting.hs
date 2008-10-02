@@ -43,7 +43,7 @@ import System.Locale
 
 {- | Representation of a document.  The document is to be stored in
    the directory 'rootDirectory', and the main file is to have a
-   filename of @'fileFront' <.> 'docExtension' dg@, where @dg@ is an
+   filename of @'fileFront' '<.>' ('docExtension' dg)@, where @dg@ is an
    instance of 'DocumentGenerator'.
  -}
 data Document = Doc { -- | Document location
@@ -60,7 +60,7 @@ data Document = Doc { -- | Document location
 -- | Represents the class of document generators.
 class DocumentGenerator dg where
     -- | Convert idealised 'Document' values into actual documents,
-    --   returning the file created.
+    --   returning the document file created.
     createDocument :: dg -> Document -> IO (Maybe FilePath)
     -- | The extension of all document-style files created.  Note that
     --   this doesn't preclude the creation of other files, e.g. images.
@@ -97,7 +97,7 @@ type DocGraph = (FilePath,DocInline,DotGraph)
    Utility functions to help with document creation.
  -}
 
--- | Return today's date as a string, e.g. "Monday 1 January, 2000".
+-- | Return today's date as a string, e.g. \"Monday 1 January, 2000\".
 --   This arbitrary format is chosen as there doesn't seem to be a way
 --   of determining the correct format as per the user's locale settings.
 today :: IO String
