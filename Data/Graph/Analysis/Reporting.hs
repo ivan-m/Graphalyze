@@ -18,10 +18,12 @@ module Data.Graph.Analysis.Reporting
       -- * Helper functions
       -- $utilities
       today,
-      tryCreateDirectory
+      tryCreateDirectory,
+      createGraph
     ) where
 
 import Data.GraphViz
+import Data.Graph.Analysis.Visualisation
 
 import Data.List
 import Data.Time
@@ -41,7 +43,7 @@ import System.Locale
 
 {- | Representation of a document.  The document is to be stored in
    the directory 'rootDirectory', and the main file is to have a
-   filename of @'fileFront' ++ 'docExtension' dg@, where @dg@ is an
+   filename of @'fileFront' <.> 'docExtension' dg@, where @dg@ is an
    instance of 'DocumentGenerator'.
  -}
 data Document = Doc { -- | Document location
@@ -84,7 +86,9 @@ data DocInline = Text String
                | Emphasis DocInline
                | DocLink DocInline Location
                | DocImage DocInline Location
-               | Graph FilePath DocInline DotGraph
+               | GraphImage DocGraph
+
+type DocGraph = (FilePath,DocInline,DotGraph)
 
 -- -----------------------------------------------------------------------------
 
@@ -114,3 +118,17 @@ tryCreateDirectory fp = do r <- try $ mkDir fp
       mkDir = createDirectoryIfMissing True
       isRight (Right _) = True
       isRight _         = False
+
+createGraph                :: FilePath -> DocGraph -> IO (Maybe DocInline)
+createGraph fp (fn,inl,dg) = do created <- runGraphviz dg output filename'
+                                if created
+                                   then return (Just img)
+                                   else return Nothing
+    where
+      ext = "png"
+      output = Png
+      filename = fn <.> ext
+      filename' = fp </> filename
+      loc = File filename
+      img = DocImage inl loc
+
