@@ -13,7 +13,8 @@
    /Graph-Theoretic Analysis of the Relationships in Discrete Data/.
  -}
 module Data.Graph.Analysis
-    ( -- * Re-exporting other modules
+    ( version,
+      -- * Re-exporting other modules
       module Data.Graph.Analysis.Types,
       module Data.Graph.Analysis.Utils,
       module Data.Graph.Analysis.Algorithms,
@@ -38,6 +39,10 @@ import Data.Maybe
 import qualified Data.Map as M
 
 -- -----------------------------------------------------------------------------
+
+-- | The library version.
+version :: String
+version = "0.1"
 
 {- |
    This represents the information that's being passed in that we want
