@@ -23,7 +23,7 @@ Library {
         else
             Build-Depends:   base < 3
 
-        Build-Depends: fgl, graphviz >= 2008.9.20, bktrees
+        Build-Depends: bktrees, fgl, graphviz >= 2008.9.20, pandoc
 
         Exposed-Modules:     Data.Graph.Analysis
                              Data.Graph.Analysis.Types
