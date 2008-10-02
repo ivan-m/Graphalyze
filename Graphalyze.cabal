@@ -18,7 +18,7 @@ flag small_base
 
 Library {
         if flag(small_base)
-            Build-Depends:   base >= 3, array, containers, directory, filepath, 
+            Build-Depends:   base >= 3, array, containers, directory, filepath,
                              old-locale, process, random, time
         else
             Build-Depends:   base < 3
@@ -33,6 +33,8 @@ Library {
                              Data.Graph.Analysis.Algorithms.Common
                              Data.Graph.Analysis.Algorithms.Directed
                              Data.Graph.Analysis.Algorithms.Clustering
+                             Data.Graph.Analysis.Reporting
+                             Data.Graph.Analysis.Reporting.Pandoc
 
         Ghc-Options:         -Wall
         Ghc-Prof-Options:    -auto-all
