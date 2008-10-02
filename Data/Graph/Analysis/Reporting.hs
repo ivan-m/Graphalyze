@@ -21,6 +21,8 @@ module Data.Graph.Analysis.Reporting
       tryCreateDirectory
     ) where
 
+import Data.GraphViz
+
 import Data.List
 import Data.Time
 import Control.Exception
@@ -82,7 +84,7 @@ data DocInline = Text String
                | Emphasis DocInline
                | DocLink DocInline Location
                | DocImage DocInline Location
-               |
+               | Graph FilePath DocInline DotGraph
 
 -- -----------------------------------------------------------------------------
 
