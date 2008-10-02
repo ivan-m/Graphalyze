@@ -44,7 +44,7 @@ import qualified Data.Map as M
 
 -- | The library version.
 version :: String
-version = "0.1"
+version = "0.2"
 
 {- |
    This represents the information that's being passed in that we want
