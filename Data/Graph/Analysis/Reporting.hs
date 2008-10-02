@@ -13,7 +13,8 @@ module Data.Graph.Analysis.Reporting
       Document(..),
       DocumentGenerator(..),
       Location(..),
-      DocElements(..),
+      DocElement(..),
+      DocInline(..),
       -- * Helper functions
       -- $utilities
       today,
@@ -45,9 +46,9 @@ data Document = Doc { -- | Document location
                       rootDirectory :: FilePath,
                       fileFront     :: String,
                       -- | Pre-matter
-                      title         :: String,
-                      author        :: String,
-                      date          :: String,
+                      title         :: DocInline,
+                      author        :: DocInline,
+                      date          :: DocInline,
                       -- | Main-matter
                       content       :: [DocElement]
                     }
@@ -69,16 +70,19 @@ instance Show Location where
     show (File fp) = fp
 
 -- | Elements of a document.
-data DocElement = Section DocElement [DocElement]
-                | Paragraph [DocElement]
-                | Text String
-                | Bold DocElement
-                | Emphasis DocElemen
+data DocElement = Section DocInline [DocElement]
+                | Paragraph [DocInline]
                 | Enumeration [DocElement]
                 | Itemized [DocElement]
-                | Definition DocElement DocElement
-                | Link DocElement Location
-                | Image DocElement Location
+                | Definition DocInline DocElement
+
+data DocInline = Text String
+               | Grouping [DocInline]
+               | Bold DocInline
+               | Emphasis DocInline
+               | DocLink DocInline Location
+               | DocImage DocInline Location
+               |
 
 -- -----------------------------------------------------------------------------
 
@@ -86,7 +90,7 @@ data DocElement = Section DocElement [DocElement]
    Utility functions to help with document creation.
  -}
 
--- | Return today's date as a string, e.g. "Monday 1 January, 2008".
+-- | Return today's date as a string, e.g. "Monday 1 January, 2000".
 --   This arbitrary format is chosen as there doesn't seem to be a way
 --   of determining the correct format as per the user's locale settings.
 today :: IO String
