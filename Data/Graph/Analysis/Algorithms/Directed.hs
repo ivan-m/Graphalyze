@@ -27,7 +27,6 @@ module Data.Graph.Analysis.Algorithms.Directed
 
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
-import Data.Graph.Analysis.Algorithms.Common
 
 import Data.Graph.Inductive.Graph
 
@@ -138,8 +137,8 @@ isSingleton' = endNode' pre
    cycles, etc.  Depending on the context, it could be interpreted as
    the part of the graph where all the "work" is done.
  -}
-coreOf :: (DynGraph g, Eq a, Eq b) => g a b -> [g a b]
-coreOf = componentsOf . fixPointGraphs stripEnds
+coreOf :: (DynGraph g, Eq a, Eq b) => g a b -> g a b
+coreOf = fixPointGraphs stripEnds
     where
       stripEnds gr' = delNodes roots . delNodes leaves $ gr'
           where
