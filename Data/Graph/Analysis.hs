@@ -18,6 +18,7 @@ module Data.Graph.Analysis
       module Data.Graph.Analysis.Types,
       module Data.Graph.Analysis.Utils,
       module Data.Graph.Analysis.Algorithms,
+      module Data.Graph.Analysis.Visualisation,
       module Data.Graph.Analysis.Reporting,
       module Data.Graph.Inductive.Graph,
       -- * Importing data
