@@ -25,6 +25,7 @@ module Data.Graph.Analysis
       ImportParams(..),
       defaultParams,
       importData,
+      manipulateNodes,
       -- * Result analysis
       -- $analfuncts
       lengthAnalysis,
@@ -41,6 +42,7 @@ import Data.Graph.Inductive.Graph
 import Data.List
 import Data.Maybe
 import qualified Data.Map as M
+import Control.Arrow(second)
 
 -- -----------------------------------------------------------------------------
 
@@ -109,6 +111,14 @@ importData params = GraphData { graph = dGraph, wantedRoots = rootNodes }
       setDirection = if (directed params) then id else undir
       -- Construct the graph.
       dGraph = setDirection $ mkGraph lNodes graphEdges
+
+-- | Apply a function to the nodes after processing.
+--   This might be useful in circumstances where you want to
+--   reduce the data type used to a simpler one, etc.
+manipulateNodes      :: (a -> b) -> GraphData a -> GraphData b
+manipulateNodes f gd = gd { graph = nmap f (graph gd)
+                          , wantedRoots = map (second f) (wantedRoots gd)
+                          }
 
 -- -----------------------------------------------------------------------------
 
