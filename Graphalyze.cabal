@@ -9,6 +9,7 @@ License-File:        LICENSE
 Copyright:           (c) Ivan Lazar Miljenovic
 Author:              Ivan Lazar Miljenovic
 Maintainer:          Ivan.Miljenovic@gmail.com
+Extra-Source-Files:  TODO
 Cabal-Version:       >= 1.2
 Build-Type:          Simple
 Tested-With:         GHC==6.8.3
@@ -23,7 +24,7 @@ Library {
         else
             Build-Depends:   base < 3
 
-        Build-Depends: bktrees, fgl, graphviz >= 2008.9.20, pandoc
+        Build-Depends:       bktrees, fgl, graphviz >= 2008.9.20, pandoc
 
         Exposed-Modules:     Data.Graph.Analysis
                              Data.Graph.Analysis.Types
@@ -39,4 +40,4 @@ Library {
         Ghc-Options:         -Wall
         Ghc-Prof-Options:    -auto-all
 
-        }
+}
