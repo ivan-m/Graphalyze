@@ -20,10 +20,12 @@ module Data.Graph.Analysis.Reporting
       -- $utilities
       today,
       tryCreateDirectory,
-      createGraph
+      createGraph,
+      maximumSize
     ) where
 
 import Data.GraphViz
+import Data.GraphViz.Attributes
 import Data.Graph.Analysis.Visualisation
 
 import Data.Time
@@ -81,6 +83,7 @@ data DocElement = Section DocInline [DocElement]
                 | Definition DocInline DocElement
                 | DocImage DocInline Location
                 | GraphImage DocGraph
+                  deriving (Show)
 
 data DocInline = Text String
                | BlankSpace
@@ -88,6 +91,7 @@ data DocInline = Text String
                | Bold DocInline
                | Emphasis DocInline
                | DocLink DocInline Location
+                 deriving (Show)
 
 type DocGraph = (FilePath,DocInline,DotGraph)
 
@@ -134,3 +138,6 @@ createGraph fp (fn,inl,dg) = do created <- runGraphviz dg output filename'
       loc = File filename
       img = DocImage inl loc
 
+-- | The recommended maximum size for graphs.
+maximumSize :: Attribute
+maximumSize = Size 18 12

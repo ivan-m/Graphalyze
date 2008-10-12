@@ -53,26 +53,27 @@ import Control.Exception
    application.
 -}
 
--- | Turns the graph into 'DotGraph' format with the given title.
---   Nodes are labelled, edges aren't.
-graphviz     :: (Graph g, Show a, Ord b) => String -> g a b -> DotGraph
-graphviz t g = graphToDot g attrs nattrs eattrs
+-- | Turns the graph into 'DotGraph' format with the given title and graph
+--   attributes.  Nodes are labelled, edges aren't.
+graphviz        :: (Graph g, Show a, Ord b) => String -> g a b -> [Attribute]
+                -> DotGraph
+graphviz t g as = graphToDot g attrs nattrs eattrs
     where
-      attrs = [Label t]
+      attrs = Label t : as
       nattrs (_,a) = [Label (show a)]
       eattrs _ = []
 
--- | Turns the graph into 'DotGraph' format with the given title.
---   Cluster the nodes based upon their 'ClusterLabel' clusters.
+-- | Turns the graph into 'DotGraph' format with the given title and graph
+--   attributes.  Cluster the nodes based upon their 'ClusterLabel' clusters.
 --   Nodes and clusters are labelled, edges aren't.
 graphvizClusters :: (Graph g, Show c, ClusterLabel a c, Ord b) =>
-                    String -> g a b -> DotGraph
-graphvizClusters t g = clusterGraphToDot g atts assignCluster catts natts eatts
+                    String -> g a b -> [Attribute] -> DotGraph
+graphvizClusters t g as = clusterGraphToDot g atts assignCluster cas nas eas
     where
-      atts = [Label t]
-      catts c = [Label (show c)]
-      natts (_,a) = [Label (nodelabel a)]
-      eatts _ = []
+      atts = Label t : as
+      cas c = [Label (show c)]
+      nas (_,a) = [Label (nodelabel a)]
+      eas _ = []
 
 -- | The possible Graphviz outputs, obtained by running /dot -Txxx/.
 --   Note that it is not possible to choose between output variants,
