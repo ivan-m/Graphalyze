@@ -123,12 +123,14 @@ makeLeaf (p,n,a,_) = (p', n, a, [])
  -}
 
 -- | Finds all cliques (i.e. maximal complete subgraphs) in the given graph.
-cliquesIn    :: (Graph g) => g a b -> [[LNode a]]
+cliquesIn    :: (DynGraph g) => g a b -> [[LNode a]]
 cliquesIn gr = map (addLabels gr) (cliquesIn' gr)
 
 -- | Finds all cliques in the graph, without including labels.
-cliquesIn'    :: (Graph g) => g a b -> [NGroup]
-cliquesIn' gr = filter (isClique gr) (findRegular gr)
+cliquesIn'    :: (DynGraph g) => g a b -> [NGroup]
+cliquesIn' gr = filter (isClique gr') (findRegular gr')
+    where
+      gr' = mkSimple gr
 
 -- | Determine if the given list of nodes is indeed a clique,
 --   and not a smaller subgraph of a clique.
@@ -192,8 +194,7 @@ cyclesIn g = map (addLabels g) (cyclesIn' g)
 
 -- | Find all cycles in the given graph, returning just the nodes.
 cyclesIn' :: (DynGraph g) => g a b -> [NGroup]
-cyclesIn' = filter (not . single) -- Exclude trivial cycles, i.e. loops
-            . concat . unfoldr findCycles
+cyclesIn' = concat . unfoldr findCycles . mkSimple
 
 -- | Find all cycles in the given graph, excluding those that are also cliques.
 uniqueCycles   :: (DynGraph g) => g a b -> [LNGroup a]
@@ -244,8 +245,8 @@ chainsIn' g = filter (not . single) -- Remove trivial chains
               $ filterNodes' isChainStart g'
     where
       -- Try to make this work on two-element cycles, undirected
-      -- graphs, etc.
-      g' = oneWay g
+      -- graphs, etc.  Also remove multiple edges, etc.
+      g' = oneWay $ mkSimple g
 
 -- | Find the chain starting with the given 'Node'.
 getChain     :: (Graph g) => g a b -> Node -> NGroup

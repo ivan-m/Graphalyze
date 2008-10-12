@@ -23,10 +23,11 @@ module Data.Graph.Analysis.Utils
       addLabels,
       filterNodes,
       filterNodes',
-      -- ** Graph manipulation
       pathValues,
+      -- ** Graph manipulation
       undir,
       oneWay,
+      mkSimple,
       nlmap,
       -- ** Graph layout
       -- | These next two are re-exported from "Data.GraphViz"
@@ -114,13 +115,13 @@ filterNodes p g = filter (p g) (labNodes g)
 filterNodes'     :: (Graph g) => (g a b -> Node -> Bool) -> g a b -> [Node]
 filterNodes' p g = filter (p g) (nodes g)
 
--- -----------------------------------------------------------------------------
-
--- | Manipulating graphs.
-
 -- | Extract the actual 'LNode's from an 'LPath'.
 pathValues          :: LPath a -> [LNode a]
 pathValues (LP lns) = lns
+
+-- -----------------------------------------------------------------------------
+
+-- | Manipulating graphs.
 
 {- |
    Make the graph undirected, i.e. for every edge from A to B, there
@@ -147,6 +148,19 @@ oneWay :: (DynGraph g, Eq b) => g a b -> g a b
 oneWay = gmap rmPre
     where
       rmPre (p,n,l,s) = (p \\ s,n,l,s)
+
+-- | Makes the graph a simple one, by removing all duplicate edges and loops.
+--   The edges removed if duplicates exist are arbitrary.
+mkSimple :: (DynGraph gr) => gr a b -> gr a b
+mkSimple = gmap simplify
+    where
+      rmLoops n = filter ((/=) n . snd)
+      rmDups = nubBy ((==) `on` snd)
+      mkSimple n = rmDups . rmLoops n
+      simplify (p,n,l,s) = (p',n,l,s')
+          where
+            p' = mkSimple n p
+            s' = mkSimple n s
 
 -- | Map over the labels on the nodes, using the node values as well.
 nlmap   :: (DynGraph gr) => (LNode a -> c) -> gr a b -> gr c b
