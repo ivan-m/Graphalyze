@@ -154,7 +154,7 @@ loc2target (File file) = (file,"")
 
 -- | Conversion of simple inline elements.
 inlines                   :: DocInline -> [Inline]
-inlines (Text str)        = intersperse Space $ map Str (words str)
+inlines (Text str)        = [Str str]
 inlines BlankSpace        = [Space]
 inlines (Grouping grp)    = concat . intersperse [Space] $ map inlines grp
 inlines (Bold inl)        = [Strong (inlines inl)]
