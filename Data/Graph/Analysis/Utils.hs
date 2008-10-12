@@ -156,11 +156,11 @@ mkSimple = gmap simplify
     where
       rmLoops n = filter ((/=) n . snd)
       rmDups = nubBy ((==) `on` snd)
-      mkSimple n = rmDups . rmLoops n
+      simpleEdges n = rmDups . rmLoops n
       simplify (p,n,l,s) = (p',n,l,s')
           where
-            p' = mkSimple n p
-            s' = mkSimple n s
+            p' = simpleEdges n p
+            s' = simpleEdges n s
 
 -- | Map over the labels on the nodes, using the node values as well.
 nlmap   :: (DynGraph gr) => (LNode a -> c) -> gr a b -> gr c b

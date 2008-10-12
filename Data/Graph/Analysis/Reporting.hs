@@ -140,4 +140,4 @@ createGraph fp (fn,inl,dg) = do created <- runGraphviz dg output filename'
 
 -- | The recommended maximum size for graphs.
 maximumSize :: Attribute
-maximumSize = Size 18 12
+maximumSize = Size 15 10
