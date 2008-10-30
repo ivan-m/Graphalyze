@@ -153,13 +153,14 @@ loc2target (URL url)   = (url,"")
 loc2target (File file) = (file,"")
 
 -- | Conversion of simple inline elements.
-inlines                   :: DocInline -> [Inline]
-inlines (Text str)        = [Str str]
-inlines BlankSpace        = [Space]
-inlines (Grouping grp)    = concat . intersperse [Space] $ map inlines grp
-inlines (Bold inl)        = [Strong (inlines inl)]
-inlines (Emphasis inl)    = [Emph (inlines inl)]
-inlines (DocLink inl loc) = [Link (inlines inl) (loc2target loc)]
+inlines                    :: DocInline -> [Inline]
+inlines (Text str)         = [Str str]
+inlines BlankSpace         = [Space]
+inlines (Grouping grp)     = concat . intersperse [Space] $ map inlines grp
+inlines (Bold inl)         = [Strong (inlines inl)]
+inlines (Emphasis inl)     = [Emph (inlines inl)]
+inlines (DocLink inl loc)  = [Link (inlines inl) (loc2target loc)]
+inlines (DocImage inl loc) = [Image (inlines inl) (loc2target loc)]
 
 {- |
    Conversion of complex elements.  The only reason it's in the IO monad is
@@ -195,11 +196,7 @@ elements p (Definition x def)  = do def' <- elements p def
                                         xdef = fmap (return . (,) x') def'
                                     return (fmap (return . DefinitionList) xdef)
 
-elements _ (DocImage inl loc)  = do let img = Image (inlines inl)
-                                                    (loc2target loc)
-                                    return $ Just [Plain [img]]
-
-elements p (GraphImage dg)     = do el <- createGraph (filedir p) dg
+elements p (GraphImage dg)     = do el <- createGraph (unDotPath $ filedir p) dg
                                     case el of
                                       Nothing  -> return Nothing
                                       Just img -> elements p img

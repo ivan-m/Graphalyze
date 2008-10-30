@@ -21,7 +21,8 @@ module Data.Graph.Analysis.Reporting
       today,
       tryCreateDirectory,
       createGraph,
-      maximumSize
+      maximumSize,
+      unDotPath
     ) where
 
 import Data.GraphViz
@@ -81,7 +82,6 @@ data DocElement = Section DocInline [DocElement]
                 | Enumeration [DocElement]
                 | Itemized [DocElement]
                 | Definition DocInline DocElement
-                | DocImage DocInline Location
                 | GraphImage DocGraph
                   deriving (Show)
 
@@ -91,6 +91,7 @@ data DocInline = Text String
                | Bold DocInline
                | Emphasis DocInline
                | DocLink DocInline Location
+               | DocImage DocInline Location
                  deriving (Show)
 
 type DocGraph = (FilePath,DocInline,DotGraph)
@@ -128,7 +129,7 @@ tryCreateDirectory fp = do r <- try $ mkDir fp
 createGraph                :: FilePath -> DocGraph -> IO (Maybe DocElement)
 createGraph fp (fn,inl,dg) = do created <- runGraphviz dg output filename'
                                 if created
-                                   then return (Just img)
+                                   then return (Just $ Paragraph [img])
                                    else return Nothing
     where
       ext = "png"
@@ -141,3 +142,11 @@ createGraph fp (fn,inl,dg) = do created <- runGraphviz dg output filename'
 -- | The recommended maximum size for graphs.
 maximumSize :: Attribute
 maximumSize = Size 15 10
+
+-- | Replace all @.@ with @-@ in the given 'FilePath', since some output
+--   formats (e.g. LaTeX) don't like extraneous @.@'s in the filename.
+unDotPath :: FilePath -> FilePath
+unDotPath = map replace
+    where
+      replace '.' = '-'
+      replace c   = c
