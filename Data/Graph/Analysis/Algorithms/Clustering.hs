@@ -68,15 +68,17 @@ import System.Random
 
      1. Every node is assigned into its own unique cluster.
 
-     2. For each iteration, sort the nodes into each order.  For each node,
-        it joins the most popular cluster in its neighbourhood
-        (where popularity is defined by the sum of the weightings).
+     2. Sort the nodes into some random order.  Each node joins the
+        most popular cluster in its neighbourhood (where popularity
+        is defined as the sum of the node weightings in that cluster).
 
      3. Repeat step 2. until a fixed point is reached.
 
    Note that this algorithm is non-deterministic, and that for some graphs
    no fixed point may be reached (and the algorithm may oscillate between
    a few different graph clusterings).
+
+   Chinese Whispers is @O(number of edges)@.
 -}
 
 -- | An instance of 'ClusterLabel' used for the Chinese Whispers algorithm.
@@ -207,7 +209,8 @@ clusteringCoef g n = if (liftM2 (||) isNaN isInfinite $ coef)
 
    The algorithm is renamed 'relativeNeighbourhood'.  Experimentally, it
    seems to work better with larger graphs (i.e. more nodes), since
-   then Graphviz makes the apparent clusters more obvious.
+   then Graphviz makes the apparent clusters more obvious.  The actual
+   algorithm is @O(n^2)@, where /n/ is the number of 'Node's in the graph.
 -}
 
 -- | The renamed CLUSTER algorithm.  Attempts to cluster a graph by using
@@ -260,7 +263,7 @@ areRelative t l1 l2 = null lune
       lune = intersect (rgnFor l1) (rgnFor l2)
 
 -- | Performs the actual clustering algorithm on the RNG.
-nbrCluster   :: (DynGraph gr) => gr a Int -> [[Node]]
+nbrCluster   :: (DynGraph gr) => gr a Int -> [NGroup]
 nbrCluster g
     | numNodes == 1 = [ns] -- Can't split up a single node.
     | eMax < 2*eMin = [ns] -- The inter-cluster relative neighbours

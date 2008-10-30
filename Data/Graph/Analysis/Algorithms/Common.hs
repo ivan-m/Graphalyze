@@ -138,7 +138,7 @@ isClique       :: (Graph g) => g a b -> NGroup -> Bool
 isClique _  [] = False
 isClique gr ns = null .
                  foldl1' intersect .
-                 map ((\\ ns) . corecursive gr) $ ns
+                 map ((\\ ns) . twoCycle gr) $ ns
 
 -- | Find all regular subgraphs of the given graph.
 findRegular :: (Graph g) => g a b -> [[Node]]
@@ -156,7 +156,7 @@ findRegularOf g
 regularOf      :: (Graph g) => g a b -> Node -> [[Node]]
 regularOf gr n = map (n:) (alsoRegular gr crs)
     where
-      crs = corecursive gr n
+      crs = twoCycle gr n
 
 -- | Recursively find all regular subgraphs only containing nodes
 --   in the given list.
@@ -166,21 +166,21 @@ alsoRegular _ [n]    = [[n]]
 alsoRegular g (n:ns) = [n] : rs ++ (alsoRegular g ns)
     where
       rs = map (n:) (alsoRegular g $ intersect crn ns)
-      crn = corecursive g n
+      crn = twoCycle g n
 
 -- | Return all nodes that are co-recursive with the given node
 --   (i.e. for n, find all n' such that n->n' and n'->n).
-corecursive      :: (Graph g) => g a b -> Node -> [Node]
-corecursive gr n = filter (elem n . suc gr) (delete n $ suc gr n)
+twoCycle      :: (Graph g) => g a b -> Node -> [Node]
+twoCycle gr n = filter (elem n . suc gr) (delete n $ suc gr n)
 
 -- | Determines if the list of nodes represents a regular subgraph.
 isRegular      :: (Graph g) => g a b -> NGroup -> Bool
-isRegular g ns = all allCorecursive split
+isRegular g ns = all allTwoCycle split
     where
       -- Node + Rest of list
       split = zip ns tns'
       tns' = tail $ tails ns
-      allCorecursive (n,rs) = null $ rs \\ (corecursive g n)
+      allTwoCycle (n,rs) = null $ rs \\ (twoCycle g n)
 
 -- -----------------------------------------------------------------------------
 {- $cycles

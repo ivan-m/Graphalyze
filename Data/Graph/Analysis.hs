@@ -29,7 +29,8 @@ module Data.Graph.Analysis
       -- * Result analysis
       -- $analfuncts
       lengthAnalysis,
-      classifyRoots
+      classifyRoots,
+      applyAlg
     ) where
 
 import Data.Graph.Analysis.Utils
@@ -99,7 +100,7 @@ importData params = GraphData { graph = dGraph, wantedRoots = rootNodes }
       addLabel (x,y) = (x,y,())
       -- The valid edges in the graph.
       graphEdges = catMaybes $ map validEdge (relationships params)
-      -- Validate an edge
+      -- Validate a node
       validNode l = case (findNode l) of
                       (Just n) -> Just (n,l)
                       _        -> Nothing
@@ -159,3 +160,8 @@ classifyRoots gd = (areWanted, notRoots, notWanted)
       areWanted = intersect wntd rts
       notRoots = wntd \\ rts
       notWanted = rts \\ wntd
+
+-- | Apply an algorithm to the data to be analysed.
+applyAlg   :: (AGr a -> b) -> GraphData a -> b
+applyAlg f = f . graph
+

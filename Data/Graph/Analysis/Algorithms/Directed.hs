@@ -94,19 +94,19 @@ isRoot' = endNode' pre
 
 -- | Find all leaves of the graph.
 leavesOf :: (Graph g) => g a b -> LNGroup a
-leavesOf = endBy pre
+leavesOf = endBy suc
 
 -- | Find all leaves of the graph.
 leavesOf' :: (Graph g) => g a b -> NGroup
-leavesOf' = endBy' pre
+leavesOf' = endBy' suc
 
 -- | Returns @True@ if this 'LNode' is a leaf.
 isLeaf :: (Graph g) => g a b -> LNode a -> Bool
-isLeaf = endNode pre
+isLeaf = endNode suc
 
 -- | Returns @True@ if this 'Node' is a leaf.
 isLeaf' :: (Graph g) => g a b -> Node -> Bool
-isLeaf' = endNode' pre
+isLeaf' = endNode' suc
 
 -- -----------------------------------------------------------------------------
 
@@ -116,19 +116,19 @@ isLeaf' = endNode' pre
 
 -- | Find all singletons of the graph.
 singletonsOf :: (Graph g) => g a b -> LNGroup a
-singletonsOf = endBy pre
+singletonsOf = endBy neighbors
 
 -- | Find all singletons of the graph.
 singletonsOf' :: (Graph g) => g a b -> NGroup
-singletonsOf' = endBy' pre
+singletonsOf' = endBy' neighbors
 
 -- | Returns @True@ if this 'LNode' is a singleton.
 isSingleton :: (Graph g) => g a b -> LNode a -> Bool
-isSingleton = endNode pre
+isSingleton = endNode neighbors
 
 -- | Returns @True@ if this 'Node' is a singleton.
 isSingleton' :: (Graph g) => g a b -> Node -> Bool
-isSingleton' = endNode' pre
+isSingleton' = endNode' neighbors
 
 -- -----------------------------------------------------------------------------
 

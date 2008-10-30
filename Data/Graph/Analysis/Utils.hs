@@ -139,7 +139,7 @@ undir = gmap dupEdges
       dupEdges (p,n,l,s) = (ps',n,l,ps)
           where
             ps = nub $ p ++ s
-            ps' = snd $ partition isLoop ps
+            ps' = filter (not . isLoop) ps
             isLoop (_,n') = n == n'
 
 -- | This is a pseudo-inverse of 'undir': any edges that are both successor
