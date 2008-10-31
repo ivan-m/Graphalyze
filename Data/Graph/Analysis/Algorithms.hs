@@ -16,7 +16,6 @@ module Data.Graph.Analysis.Algorithms
       module Data.Graph.Analysis.Algorithms.Clustering
     ) where
 
-import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Algorithms.Common
 import Data.Graph.Analysis.Algorithms.Directed
 import Data.Graph.Analysis.Algorithms.Clustering

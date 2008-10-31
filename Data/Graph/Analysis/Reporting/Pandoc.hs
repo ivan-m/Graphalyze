@@ -137,8 +137,8 @@ createPandoc p d = do created <- tryCreateDirectory dir
                          else do elems <- multiElems pp (content d)
                                  case elems of
                                    Just es -> do let es' = htmlAuthDt : es
-                                                     pd = Pandoc meta es'
-                                                     doc = convert pd
+                                                     pnd = Pandoc meta es'
+                                                     doc = convert pnd
                                                  wr <- tryWrite doc
                                                  case wr of
                                                    (Right _) -> success
