@@ -36,7 +36,6 @@ import Data.Graph.Inductive.Graph
 import Data.List
 import Data.Maybe
 import Data.Function
-import qualified Data.Set as Set
 import qualified Data.Set.BKTree as BK
 import Data.Set.BKTree(BKTree, Metric(..))
 import Control.Arrow
@@ -81,7 +80,7 @@ import System.Random
 -- | The actual Chinese Whispers algorithm.
 chineseWhispers      :: (RandomGen g, Eq a, Eq b, DynGraph gr) => g -> gr a b
                      -> gr (GenCluster a) b
-chineseWhispers g gr = fst $ fixPointBy eq whispering (gr',g)
+chineseWhispers g gr = reCluster . fst $ fixPointBy eq whispering (gr',g)
     where
       eq = equal `on` fst
       ns = nodes gr
