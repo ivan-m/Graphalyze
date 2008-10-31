@@ -117,6 +117,7 @@ writerOptions = defaultWriterOptions { writerStandalone = True
 -- | Used when traversing the document structure.
 data PandocProcess = PP { secLevel :: Int
                         , filedir  :: FilePath
+                        , graphdir :: FilePath
                         , grSize   :: [Attribute]
                         , eGSize   :: Maybe [Attribute]
                         }
@@ -124,14 +125,17 @@ data PandocProcess = PP { secLevel :: Int
 -- | Start with a level 1 heading.
 defaultProcess :: PandocProcess
 defaultProcess = PP { secLevel = 1
-                    , filedir = undefined
-                    , grSize = undefined
-                    , eGSize = undefined
+                    , graphdir = undefined
+                    , filedir  = undefined
+                    , grSize   = undefined
+                    , eGSize   = undefined
                     }
 
 -- | Create the document.
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
 createPandoc p d = do created <- tryCreateDirectory dir
+                      -- If the first one fails, so will this one.
+                      tryCreateDirectory $ dir </> gdir
                       if (not created)
                          then failDoc
                          else do elems <- multiElems pp (content d)
@@ -146,6 +150,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
                                    Nothing -> failDoc
     where
       dir = rootDirectory d
+      gdir = graphDirectory d
       auth = author d
       dt = date d
       meta = makeMeta (title d) auth dt
@@ -153,6 +158,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
       htmlAuthDt = htmlInfo auth dt
       createSize' = return . createSize
       pp = defaultProcess { filedir = dir
+                          , graphdir = gdir
                           , grSize = createSize' (graphSize p)
                           , eGSize = fmap createSize' (extGraphSize p)
                           }
@@ -231,6 +237,7 @@ elements p (Definition x def)  = do def' <- elements p def
                                     return (fmap (return . DefinitionList) xdef)
 
 elements p (GraphImage dg)     = do el <- createGraph (filedir p)
+                                                      (graphdir p)
                                                       (grSize p)
                                                       (eGSize p) dg
                                     case el of

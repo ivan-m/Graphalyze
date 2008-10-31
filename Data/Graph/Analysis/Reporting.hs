@@ -51,14 +51,17 @@ import System.Locale
    instance of 'DocumentGenerator'.
  -}
 data Document = Doc { -- | Document location
-                      rootDirectory :: FilePath,
-                      fileFront     :: String,
+                      rootDirectory  :: FilePath,
+                      fileFront      :: String,
+                      -- | The sub-directory of 'rootDirectory',
+                      --   where graphs are to be created.
+                      graphDirectory :: FilePath,
                       -- | Pre-matter
-                      title         :: DocInline,
-                      author        :: String,
-                      date          :: String,
+                      title          :: DocInline,
+                      author         :: String,
+                      date           :: String,
                       -- | Main-matter
-                      content       :: [DocElement]
+                      content        :: [DocElement]
                     }
 
 -- | Represents the class of document generators.
@@ -132,9 +135,9 @@ tryCreateDirectory fp = do r <- try $ mkDir fp
 --   If the second set of attributes is not 'Nothing', then the first
 --   image links to the second.  The whole result is wrapped in a
 --   'Paragraph'.
-createGraph :: FilePath -> [Attribute] -> Maybe [Attribute] -> DocGraph
-            -> IO (Maybe DocElement)
-createGraph fp as mas (fn,inl,ag)
+createGraph :: FilePath -> FilePath -> [Attribute] -> Maybe [Attribute]
+            -> DocGraph -> IO (Maybe DocElement)
+createGraph fp gfp as mas (fn,inl,ag)
     = do eImg <- gI as DocImage fn inl Nothing
          if (isJust eImg)
             then case mas of
@@ -146,15 +149,16 @@ createGraph fp as mas (fn,inl,ag)
       i2e i = Just (i,Paragraph [i])
       rt = return . fmap snd
       toImg = fst . fromJust
-      gI a ln nm lb fl = do mImg <- graphImage fp a ln (nm,lb,ag)
+      gI a ln nm lb fl = do mImg <- graphImage fp gfp a ln (nm,lb,ag)
                             case mImg of
                               Nothing    -> return fl
                               (Just img) -> return $ i2e img
 
 -- | Create the inline image/link from the given DocGraph.
-graphImage :: FilePath -> [Attribute] -> (DocInline -> Location -> DocInline)
+graphImage :: FilePath -> FilePath -> [Attribute]
+           -> (DocInline -> Location -> DocInline)
            -> DocGraph -> IO (Maybe DocInline)
-graphImage fp as link (fn,inl,ag)
+graphImage fp gfp as link (fn,inl,ag)
     = do created <- runGraphviz dg output filename'
          if created
             then return (Just img)
@@ -164,7 +168,7 @@ graphImage fp as link (fn,inl,ag)
       fn' = unDotPath fn
       ext = "png"
       output = Png
-      filename = fn' <.> ext
+      filename = gfp </> fn' <.> ext
       filename' = fp </> filename
       loc = File filename
       img = link inl loc
