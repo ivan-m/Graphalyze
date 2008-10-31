@@ -16,6 +16,7 @@
 module Data.Graph.Analysis.Utils
     ( -- * Graph functions
       -- ** Data extraction
+      -- $extracting
       node,
       label,
       labels,
@@ -31,21 +32,28 @@ module Data.Graph.Analysis.Utils
       mkSimple,
       nlmap,
       -- ** Graph layout
-      -- | These next two are re-exported from "Data.GraphViz"
+      -- $spatial
+      -- These next two are re-exported from "Data.GraphViz"
       AttributeNode,
       AttributeEdge,
       dotizeGraph,
       toPosGraph,
       getPositions,
       -- ** Cluster functions
+      -- $cluster
       createLookup,
       setCluster,
       assignCluster,
+      reCluster,
+      reClusterBy,
+      clusterCount,
       -- * List functions
+      -- $list
       single,
       longerThan,
       addLengths,
       longest,
+      lengthSort,
       groupElems,
       sortMinMax,
       blockPrint,
@@ -85,7 +93,7 @@ import System.IO.Unsafe(unsafePerformIO)
 
 -- -----------------------------------------------------------------------------
 
--- | Extracting data from graphs.
+-- $extracting Extracting data from graphs.
 
 -- | The node number of an 'LNode'.
 node :: LNode a -> Node
@@ -126,7 +134,7 @@ pathValues (LP lns) = lns
 
 -- -----------------------------------------------------------------------------
 
--- | Manipulating graphs.
+-- Manipulating graphs.
 
 {- |
    Make the graph undirected, i.e. for every edge from A to B, there
@@ -175,9 +183,12 @@ nlmap f = gmap f'
 
 -- -----------------------------------------------------------------------------
 
-{- |
+{- $spatial
    Spatial positioning of graphs.  Use the 'graphToGraph' function in
    "Data.GraphViz" to determine potential graph layouts.
+
+   Note that for convenience sake, 'AttributeNode' and 'AttributeEdge'
+   from "Data.GraphViz" have been re-exported.
 -}
 
 -- | Pass the plain graph through 'graphToGraph'.  This is an IO action,
@@ -214,11 +225,11 @@ getPositions = map label . labNodes . toPosGraph
 
 -- -----------------------------------------------------------------------------
 
--- | Cluster utility functions.
+-- $cluster Cluster utility functions.
 
 -- | Create a cluster-lookup 'IntMap'.
 createLookup :: [[Node]] -> IntMap Int
-createLookup = IMap.fromList . concatMap addCluster . zip [1..]
+createLookup = IMap.fromList . concatMap addCluster . zip [1..] . lengthSort
     where
       addCluster (k,ns) = map (flip (,) k) ns
 
@@ -233,9 +244,32 @@ setCluster m = nlmap assClust
 assignCluster :: (ClusterLabel a c) => LNode a -> NodeCluster c a
 assignCluster nl@(_,a) = C (cluster a) (N nl)
 
+-- | Change the cluster values in the graph by having the largest cluster
+--   have the smallest cluster label.
+reCluster   :: (DynGraph g) => g (GenCluster a) b -> g (GenCluster a) b
+reCluster g = reClusterBy cs' g
+    where
+      cnts = IMap.toList $ clusterCount g
+      cPop = map fst $ sortBy (flip compare) cnts
+      cs' = IMap.fromList $ zip cPop [1..]
+
+-- | Change the cluster values using the given lookup 'IntMap'.
+reClusterBy   :: (DynGraph g) => IntMap Int -> g (GenCluster a) b
+              -> g (GenCluster a) b
+reClusterBy m = nmap newClust
+    where
+      newClust c = c { clust = m IMap.! (clust c) }
+
+-- | Create an 'IntMap' of the size of each cluster.
+clusterCount :: (Graph g) => g (GenCluster a) b -> IntMap Int
+clusterCount = ufold incMap IMap.empty
+    where
+      incMap (_,_,l,_) = IMap.insertWith ins (clust l) 1
+      ins _ c = c + 1
+
 -- -----------------------------------------------------------------------------
 
--- | List utility functions.
+-- $list List utility functions.
 
 -- | Return true if and only if the list contains a single element.
 single     :: [a] -> Bool
@@ -253,8 +287,10 @@ addLengths = map ( \ as -> (length as, as))
 
 -- | Returns the longest list in a list of lists.
 longest :: [[a]] -> [a]
-longest = snd . maximumBy (compare `on` fst)
-          . addLengths
+longest = head . lengthSort
+
+lengthSort :: [[a]] -> [[a]]
+lengthSort = map snd . sortBy (flip compare `on` fst) . addLengths
 
 -- | Group elements by the given grouping function.
 groupElems   :: (Ord b) => (a -> b) -> [a] -> [(b,[a])]
@@ -397,7 +433,7 @@ randomMerge g ((x:xs,xn),(y:ys,yn)) = if n <= xn
 
 -- -----------------------------------------------------------------------------
 
--- | Statistics functions.
+-- Statistics functions.
 
 -- | An efficient mean function by Don Stewart, available from:
 --   <http://cgi.cse.unsw.edu.au/~dons/blog/2008/05/16#fast>
@@ -427,7 +463,7 @@ statistics' as = (av', stdDev')
 
 -- -----------------------------------------------------------------------------
 
--- | Other utility functions.
+-- Other utility functions.
 
 -- | Find the fixed point of a function with the given initial value.
 fixPoint   :: (Eq a) => (a -> a) -> a -> a
