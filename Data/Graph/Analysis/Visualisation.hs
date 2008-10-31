@@ -283,5 +283,11 @@ showCycle []         = ""
 showCycle lns@(ln:_) = showPath (lns ++ [ln])
 
 -- | Show a group of nodes, with no implicit ordering.
-showNodes :: (Show a) => LNGroup a -> String
-showNodes = blockPrint . map label
+showNodes     :: (Show a) => LNGroup a -> String
+showNodes []  = ""
+showNodes lns = blockPrint' . addCommas
+                $ map (show . label) lns
+    where
+      addCommas []     = []
+      addCommas [l]    = [l]
+      addCommas (l:ls) = (l ++ ", ") : addCommas ls
