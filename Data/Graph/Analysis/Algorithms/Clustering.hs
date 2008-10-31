@@ -301,8 +301,14 @@ collapseGraph g = foldl' (flip collapseAllBy) cg interestingParts
       cg = makeCollapsible g
       interestingParts = [cliquesIn', cyclesIn', chainsIn']
 
-trivialCollapse :: (Graph gr) => gr (CNodes a) b -> Bool
-trivialCollapse = all (single . cNodes) . labels
+-- | Return @'True'@ if the collapsed graph is either a singleton node
+--   or else isomorphic to the original graph (i.e. not collapsed at all).
+trivialCollapse    :: (Graph gr) => gr (CNodes a) b -> Bool
+trivialCollapse cg = allCollapsed || notCollapsed
+    where
+      allCollapsed = (single lns) || (null lns)
+      notCollapsed = all (single . cNodes) lns
+      lns = labels cg
 
 -- | Allow the graph to be collapsed.
 makeCollapsible :: (DynGraph gr) => gr a b -> gr (CNodes a) b
