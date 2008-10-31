@@ -69,7 +69,10 @@ class (Ord c) => ClusterLabel a c | a -> c where
     nodelabel :: a -> String
 
 -- | A generic cluster-label type.
-data GenCluster a = GC Int a
+data GenCluster a = GC { clust :: Int
+                       , nLbl  :: a
+                       }
+                    deriving (Eq,Show)
 
 instance (Show a) => ClusterLabel (GenCluster a) Int where
     cluster (GC c _) = c
