@@ -17,11 +17,8 @@ module Data.Graph.Analysis.Testing
       printList
     ) where
 
-
+import Data.Graph.Analysis
 import Data.Graph.Analysis.Visualisation
-import Data.Graph.Inductive.Graph
-import Data.Graph.Analysis.Types
-import Data.Graph.Analysis.Utils
 import Data.GraphViz
 import System.Process
 import System.Random
