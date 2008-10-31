@@ -162,12 +162,12 @@ classifyRoots gd = (areWanted, notRoots, notWanted)
       notWanted = rts \\ wntd
 
 -- | Only return those chains (see 'chainsIn') where the non-initial
---   nodes are /not/ roots.
+--   nodes are /not/ expected roots.
 interiorChains    :: (Eq a) => GraphData a -> [LNGroup a]
 interiorChains gd = filter (not . interiorRoot) chains
     where
       chains = applyAlg chainsIn gd
-      rts = applyAlg rootsOf gd
+      rts = wantedRoots gd
       interiorRoot = any (`elem` rts) . tail
 
 -- | Apply an algorithm to the data to be analysed.
