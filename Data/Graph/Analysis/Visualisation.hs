@@ -284,4 +284,4 @@ showCycle lns@(ln:_) = showPath (lns ++ [ln])
 
 -- | Show a group of nodes, with no implicit ordering.
 showNodes :: (Show a) => LNGroup a -> String
-showNodes = blockPrintList . map label
+showNodes = blockPrint . map label
