@@ -14,7 +14,6 @@ module Data.Graph.Analysis.Algorithms.Clustering
     ( -- * Clustering Algorithms
       -- ** Non-deterministic algorithms
       -- $chinesewhispers
-      Whispering,
       chineseWhispers,
       -- ** Spatial Algorithms
       -- $relneighbours
@@ -31,7 +30,6 @@ import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 import Data.Graph.Analysis.Visualisation(showNodes)
 import Data.Graph.Analysis.Algorithms.Common
-import Data.Graph.Analysis.Algorithms.Directed(rootsOf')
 
 import Data.Graph.Inductive.Graph
 
@@ -47,7 +45,7 @@ import System.Random
 -- -----------------------------------------------------------------------------
 
 {- $chinesewhispers
-   The Chinese Whispering Algorithm.
+   The Chinese Whispers Algorithm.
    This is an adaptation of the algorithm described in:
 
    Biemann, C. (2006): Chinese Whispers - an Efficient Graph Clustering
@@ -61,10 +59,7 @@ import System.Random
        (also, we want the algorithm to be dependent solely upon the
         /structure/ of the graph, not what it contains).
 
-     * Increase the weighting of those nodes present in interesting structures,
-       such as loops and root nodes.  This is to try and ensure that these nodes
-       end up in the same cluster.
-
+     * Explicitly shuffle the node order for each iteration.
 
    Simplistically, the way it works is this:
 
@@ -83,19 +78,9 @@ import System.Random
    Chinese Whispers is @O(number of edges)@.
 -}
 
--- | An instance of 'ClusterLabel' used for the Chinese Whispers algorithm.
-data Whispering a = W { name  :: a      -- ^ The original label.
-                      , whisp :: Int    -- ^ The current cluster this node is in.
-                      , coeff :: Double -- ^ The node's weighting.
-                      } deriving (Show,Eq)
-
-instance (Show a) => ClusterLabel (Whispering a) Int where
-    cluster   = whisp
-    nodelabel = show . name
-
 -- | The actual Chinese Whispers algorithm.
 chineseWhispers      :: (RandomGen g, Eq a, Eq b, DynGraph gr) => g -> gr a b
-                     -> gr (Whispering a) b
+                     -> gr (GenCluster a) b
 chineseWhispers g gr = fst $ fixPointBy eq whispering (gr',g)
     where
       eq = equal `on` fst
@@ -109,20 +94,20 @@ chineseWhispers g gr = fst $ fixPointBy eq whispering (gr',g)
 
 -- | Choose a new cluster for the given 'Node'.  Note that this updates
 --   the graph each time a new cluster value is chosen.
-whisperNode          :: (RandomGen g, DynGraph gr) => (gr (Whispering a) b,g)
-                     -> Node -> (gr (Whispering a) b,g)
+whisperNode          :: (RandomGen g, DynGraph gr) => (gr (GenCluster a) b,g)
+                     -> Node -> (gr (GenCluster a) b,g)
 whisperNode (gr,g) n = (c' & gr',g')
     where
       (Just c,gr') = match n gr
       (g',c') = whisper gr g c
 
 -- | Choose a new cluster for the given @Context@.
-whisper :: (RandomGen g, Graph gr) => gr (Whispering a) b -> g
-        -> Context (Whispering a) b -> (g,Context (Whispering a) b)
-whisper gr g (p,n,al,s) = (g',(p,n,al {whisp = w'},s))
+whisper :: (RandomGen g, Graph gr) => gr (GenCluster a) b -> g
+        -> Context (GenCluster a) b -> (g,Context (GenCluster a) b)
+whisper gr g (p,n,al,s) = (g',(p,n,al { clust = w' },s))
     where
       (w',g') = case (neighbors gr n) of
-                  [] -> (whisp al,g)
+                  [] -> (clust al,g)
                   -- Add this current node to the list of neighbours to add
                   -- extra weighting, as it seems to give better results.
                   ns -> chooseWhisper g (addLabels gr (n:ns))
@@ -130,36 +115,22 @@ whisper gr g (p,n,al,s) = (g',(p,n,al {whisp = w'},s))
 -- | Choose which cluster to pick by taking the one with maximum sum of
 --   weightings.  If more than one has the same maximum, choose one
 --   randomly.
-chooseWhisper       :: (RandomGen g) => g -> [LNode (Whispering a)]
+chooseWhisper       :: (RandomGen g) => g -> [LNode (GenCluster a)]
                     -> (Int,g)
-chooseWhisper g lns = pick maxWspWgts
+chooseWhisper g lns = pick maxWsps
     where
       -- This isn't the most efficient method of choosing a random list element,
       -- but the graph is assumed to be relatively sparse and thus ns should
       -- be relatively short.
       pick ns = first (ns!!) $ randomR (0,length ns - 1) g
-      whispWgts = map (second sumWgts) . groupElems whisp $ map label lns
-      maxWspWgts = map fst . snd . head $ groupElems (negate . snd) whispWgts
-      sumWgts = sum . map coeff
+      whisps = map (second length) . groupElems clust $ map label lns
+      maxWsps = map fst . snd . head $ groupElems (negate . snd) whisps
 
 -- | Convert the graph into a form suitable for the Chinese Whispers algorithm.
-addWhispers   :: (DynGraph gr) => gr a b -> gr (Whispering a) b
+addWhispers   :: (DynGraph gr) => gr a b -> gr (GenCluster a) b
 addWhispers g = gmap augment g
     where
-      augment (p,n,l,s) = (p,n,W { name  = l
-                                 , whisp = n
-                                 , coeff = coefFor n
-                                 },s)
-      -- Note that cliques are also cycles...
-      -- cliques = Set.fromList . concat $ cliquesIn' g
-      cycles = Set.fromList . concat $ cyclesIn' g
-      roots = Set.fromList $ rootsOf' g
-      -- Give more emphasis to interesting parts of the graph.
-      coefFor n
-          | Set.member n roots   = 3
-          | Set.member n cycles  = 2
-          | otherwise            = 1
-
+      augment (p,n,l,s) = (p,n, GC { clust = n, nLbl = l }, s)
 
 {-
 
