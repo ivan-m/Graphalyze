@@ -22,7 +22,9 @@ module Data.Graph.Analysis.Algorithms.Clustering
       -- * Graph Collapsing
       -- $collapsing
       CNodes(..),
-      collapseGraph
+      collapseGraph,
+      trivialCollapse,
+      cNodes
     ) where
 
 import Data.Graph.Analysis.Types
@@ -313,6 +315,10 @@ nbrCluster g
 -- | A collapsed node contains a list of nodes that it represents.
 data CNodes a = CN [LNode a]
 
+-- | The 'LNode's stored in a 'CNodes'.
+cNodes          :: CNodes a -> [LNode a]
+cNodes (CN lns) = lns
+
 -- | This definition of 'show' is written so as to make the shapes of the
 --   nodes in Graphviz roughly circular, rather than one long ellipse.
 instance (Show a) => Show (CNodes a) where
@@ -324,6 +330,9 @@ collapseGraph g = foldl' (flip collapseAllBy) cg interestingParts
     where
       cg = makeCollapsible g
       interestingParts = [cliquesIn', cyclesIn', chainsIn']
+
+trivialCollapse :: (Graph gr) => gr (CNodes a) b -> Bool
+trivialCollapse = all (single . cNodes) . labels
 
 -- | Allow the graph to be collapsed.
 makeCollapsible :: (DynGraph gr) => gr a b -> gr (CNodes a) b

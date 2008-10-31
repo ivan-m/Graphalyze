@@ -18,6 +18,7 @@ module Data.Graph.Analysis.Utils
       -- ** Data extraction
       node,
       label,
+      labels,
       edge,
       eLabel,
       addLabels,
@@ -90,15 +91,19 @@ import System.IO.Unsafe(unsafePerformIO)
 node :: LNode a -> Node
 node = fst
 
--- | The label of an 'LNode'
+-- | The label of an 'LNode'.
 label :: LNode a -> a
 label = snd
+
+-- | The labels of all nodes in a tree.
+labels :: (Graph g) => g a b -> [a]
+labels = map label . labNodes
 
 -- | Extract the 'Edge' from the 'LEdge'.
 edge           :: LEdge b -> Edge
 edge (n1,n2,_) = (n1,n2)
 
--- | The label of an 'LEdge'
+-- | The label of an 'LEdge'.
 eLabel         :: LEdge b -> b
 eLabel (_,_,b) = b
 
