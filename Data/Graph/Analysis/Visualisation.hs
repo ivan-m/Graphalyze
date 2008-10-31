@@ -181,7 +181,7 @@ runGraphvizCommand             :: GraphvizCommand -> DotGraph -> GraphvizOutput
 runGraphvizCommand cmd gr t fp = runGraphvizInternal (show cmd) gr t fp
 
 -- | This command should /not/ be available outside this module, as
---   it isn't safe: running an arbitrary command will crash the program.
+--   it isn't safe: running an arbitrary command will crash the programme.
 runGraphvizInternal :: String -> DotGraph -> GraphvizOutput -> FilePath
                     -> IO Bool
 runGraphvizInternal cmd gr t fp
