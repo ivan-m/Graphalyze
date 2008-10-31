@@ -27,6 +27,7 @@ module Data.Graph.Analysis.Reporting.Pandoc
 -- TODO : the ability to create multiple files.
 
 import Data.Graph.Analysis.Reporting
+import Data.GraphViz.Attributes(Attribute)
 
 import Data.List
 import Data.Maybe
@@ -43,25 +44,28 @@ import System.FilePath
  -}
 
 pandocHtml :: PandocDocument
-pandocHtml = PD { writer    = writeHtmlString
-                , extension = "html"
-                , header    = "" -- Header will be included
+pandocHtml = pd { writer       = writeHtmlString
+                , extension    = "html"
+                , header       = "" -- Header will be included
+                , extGraphSize = Just $ defaultWidth * 10
                 }
 
 pandocLaTeX :: PandocDocument
-pandocLaTeX = PD { writer    = writeLaTeX
+pandocLaTeX = pd { writer    = writeLaTeX
                  , extension = "tex"
                  , header    = defaultLaTeXHeader
+                 -- 4.5" should be less than \textwidth in LaTeX.
+                 , graphSize = 4.5
                  }
 
 pandocRtf :: PandocDocument
-pandocRtf = PD { writer    = writeRTF
+pandocRtf = pd { writer    = writeRTF
                , extension = "rtf"
                , header    = defaultRTFHeader
                }
 
 pandocMarkdown :: PandocDocument
-pandocMarkdown = PD { writer = writeMarkdown
+pandocMarkdown = pd { writer = writeMarkdown
                     , extension = "text"
                     , header = ""
                     }
@@ -72,10 +76,32 @@ pandocMarkdown = PD { writer = writeMarkdown
    Pandoc definition.
  -}
 
-data PandocDocument = PD { writer :: WriterOptions -> Pandoc -> String
-                         , extension :: FilePath
-                         , header :: String
+-- | Definition of a Pandoc Document.  Size measurements are in inches,
+--   and a 6:4 ratio is used for width:length.
+data PandocDocument = PD { -- | The Pandoc document style
+                           writer       :: WriterOptions -> Pandoc -> String,
+                           -- | The file extension used
+                           extension    :: FilePath,
+                           -- | The Pandoc header to use
+                           header       :: String,
+                           -- | Maximum width of graphs to be produced.
+                           graphSize    :: Double,
+                           -- | Optional maximum width of external linked graph.
+                           extGraphSize :: Maybe Double
                          }
+
+-- | Some default sizes.  Note that all other fields of 'PandocDocument'
+--   still need to be defined.
+pd :: PandocDocument
+pd = PD { writer       = undefined,
+          extension    = undefined,
+          header       = undefined,
+          graphSize    = defaultWidth,
+          extGraphSize = Nothing
+        }
+
+defaultWidth :: Double
+defaultWidth = 10
 
 instance DocumentGenerator PandocDocument where
     createDocument = createPandoc
@@ -91,12 +117,16 @@ writerOptions = defaultWriterOptions { writerStandalone = True
 -- | Used when traversing the document structure.
 data PandocProcess = PP { secLevel :: Int
                         , filedir  :: FilePath
+                        , grSize   :: [Attribute]
+                        , eGSize   :: Maybe [Attribute]
                         }
 
 -- | Start with a level 1 heading.
 defaultProcess :: PandocProcess
 defaultProcess = PP { secLevel = 1
-                    , filedir = ""
+                    , filedir = undefined
+                    , grSize = undefined
+                    , eGSize = undefined
                     }
 
 -- | Create the document.
@@ -121,7 +151,11 @@ createPandoc p d = do created <- tryCreateDirectory dir
       meta = makeMeta (title d) auth dt
       -- Html output doesn't show date and auth anywhere by default.
       htmlAuthDt = htmlInfo auth dt
-      pp = defaultProcess { filedir = dir }
+      createSize' = return . createSize
+      pp = defaultProcess { filedir = dir
+                          , grSize = createSize' (graphSize p)
+                          , eGSize = fmap createSize' (extGraphSize p)
+                          }
       opts = writerOptions { writerHeader = (header p) }
       convert = (writer p) opts
       file = dir </> (fileFront d) <.> (extension p)
@@ -144,7 +178,7 @@ htmlInfo         :: String -> String -> Block
 htmlInfo auth dt = RawHtml html
     where
       heading = "<h1>Document Information</h1>"
-      html = unlines [heading,htmlize auth, htmlize dt]
+      html = unlines [heading, htmlize auth, htmlize dt]
       htmlize str = "<blockquote><p><em>" ++ str ++ "</em></p></blockquote>"
 
 -- | Link conversion
@@ -196,7 +230,9 @@ elements p (Definition x def)  = do def' <- elements p def
                                         xdef = fmap (return . (,) x') def'
                                     return (fmap (return . DefinitionList) xdef)
 
-elements p (GraphImage dg)     = do el <- createGraph (unDotPath $ filedir p) dg
+elements p (GraphImage dg)     = do el <- createGraph (filedir p)
+                                                      (grSize p)
+                                                      (eGSize p) dg
                                     case el of
                                       Nothing  -> return Nothing
                                       Just img -> elements p img
@@ -207,7 +243,6 @@ multiElems p elems = do elems' <- mapM (elements p) elems
                         if (any isNothing elems')
                            then return Nothing
                            else return (Just $ concatMap fromJust elems')
-
 
 -- | As for 'multiElems', but don't @concat@ the resulting 'Block's.
 multiElems'         :: PandocProcess -> [DocElement] -> IO (Maybe [[Block]])

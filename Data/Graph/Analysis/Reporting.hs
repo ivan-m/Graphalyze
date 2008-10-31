@@ -21,7 +21,7 @@ module Data.Graph.Analysis.Reporting
       today,
       tryCreateDirectory,
       createGraph,
-      maximumSize,
+      createSize,
       unDotPath
     ) where
 
@@ -29,6 +29,7 @@ import Data.GraphViz
 import Data.GraphViz.Attributes
 import Data.Graph.Analysis.Visualisation
 
+import Data.Maybe
 import Data.Time
 import Control.Exception
 import System.Directory
@@ -83,8 +84,8 @@ data DocElement = Section DocInline [DocElement]
                 | Itemized [DocElement]
                 | Definition DocInline DocElement
                 | GraphImage DocGraph
-                  deriving (Show)
 
+-- | Inline elements of a document.
 data DocInline = Text String
                | BlankSpace
                | Grouping [DocInline]
@@ -92,9 +93,11 @@ data DocInline = Text String
                | Emphasis DocInline
                | DocLink DocInline Location
                | DocImage DocInline Location
-                 deriving (Show)
 
-type DocGraph = (FilePath,DocInline,DotGraph)
+-- | Let the 'DocumentGenerator' instance apply extra settings, such as size.
+type AttrsToGraph = [Attribute] -> DotGraph
+
+type DocGraph = (FilePath,DocInline,AttrsToGraph)
 
 -- -----------------------------------------------------------------------------
 
@@ -125,23 +128,51 @@ tryCreateDirectory fp = do r <- try $ mkDir fp
       isRight _         = False
 
 -- | Attempts to creates a png file (with the given filename in the
---   given directory) and - if successful - returns a 'DocImage' link.
-createGraph                :: FilePath -> DocGraph -> IO (Maybe DocElement)
-createGraph fp (fn,inl,dg) = do created <- runGraphviz dg output filename'
-                                if created
-                                   then return (Just $ Paragraph [img])
-                                   else return Nothing
+--   given directory) from the graph using the given attributes.
+--   If the second set of attributes is not 'Nothing', then the first
+--   image links to the second.  The whole result is wrapped in a
+--   'Paragraph'.
+createGraph :: FilePath -> [Attribute] -> Maybe [Attribute] -> DocGraph
+            -> IO (Maybe DocElement)
+createGraph fp as mas (fn,inl,ag)
+    = do eImg <- gI as DocImage fn inl Nothing
+         if (isJust eImg)
+            then case mas of
+                   Nothing    -> rt eImg
+                   (Just as') -> do rt =<< gI as' DocLink fn' (toImg eImg) eImg
+            else return Nothing
     where
+      fn' = fn ++ "-large"
+      i2e i = Just (i,Paragraph [i])
+      rt = return . fmap snd
+      toImg = fst . fromJust
+      gI a ln nm lb fl = do mImg <- graphImage fp a ln (nm,lb,ag)
+                            case mImg of
+                              Nothing    -> return fl
+                              (Just img) -> return $ i2e img
+
+-- | Create the inline image/link from the given DocGraph.
+graphImage :: FilePath -> [Attribute] -> (DocInline -> Location -> DocInline)
+           -> DocGraph -> IO (Maybe DocInline)
+graphImage fp as link (fn,inl,ag)
+    = do created <- runGraphviz dg output filename'
+         if created
+            then return (Just img)
+            else return Nothing
+    where
+      dg = ag as
+      fn' = unDotPath fn
       ext = "png"
       output = Png
-      filename = fn <.> ext
+      filename = fn' <.> ext
       filename' = fp </> filename
       loc = File filename
-      img = DocImage inl loc
+      img = link inl loc
 
--- | The recommended maximum size for graphs.
-maximumSize :: Attribute
-maximumSize = Size 15 10
+-- | Create the "Data.GraphViz" 'Size' 'Attribute' using the given width
+--   and a 6:4 width:height ratio.
+createSize   :: Double -> Attribute
+createSize w = Size w (w*4/6)
 
 -- | Replace all @.@ with @-@ in the given 'FilePath', since some output
 --   formats (e.g. LaTeX) don't like extraneous @.@'s in the filename.
