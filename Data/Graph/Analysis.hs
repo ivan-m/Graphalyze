@@ -30,6 +30,7 @@ module Data.Graph.Analysis
       -- $analfuncts
       lengthAnalysis,
       classifyRoots,
+      interiorChains,
       applyAlg
     ) where
 
@@ -154,14 +155,21 @@ lengthAnalysis as = (av,stdDev,as'')
 classifyRoots    :: (Eq a) => GraphData a -> ([LNode a], [LNode a], [LNode a])
 classifyRoots gd = (areWanted, notRoots, notWanted)
     where
-      g = graph gd
       wntd = wantedRoots gd
-      rts = rootsOf g
+      rts = applyAlg rootsOf gd
       areWanted = intersect wntd rts
       notRoots = wntd \\ rts
       notWanted = rts \\ wntd
 
+-- | Only return those chains (see 'chainsIn') where the non-initial
+--   nodes are /not/ roots.
+interiorChains    :: (Eq a) => GraphData a -> [LNGroup a]
+interiorChains gd = filter (not . interiorRoot) chains
+    where
+      chains = applyAlg chainsIn gd
+      rts = applyAlg rootsOf gd
+      interiorRoot = any (`elem` rts) . tail
+
 -- | Apply an algorithm to the data to be analysed.
 applyAlg   :: (AGr a -> b) -> GraphData a -> b
 applyAlg f = f . graph
-
