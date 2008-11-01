@@ -191,7 +191,7 @@ relativeNeighbourhood   :: (DynGraph gr, Eq a, Ord b) => gr a b
                         -> gr (GenCluster a) b
 relativeNeighbourhood g = setCluster cMap g
     where
-      cMap = createLookup . concatMap rn $ componentsOf g
+      cMap = createLookup $ rn g
       rn g' = nbrCluster rng
           where
             rng :: Gr () Int
