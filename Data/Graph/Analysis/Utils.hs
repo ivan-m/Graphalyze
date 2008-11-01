@@ -250,7 +250,7 @@ reCluster   :: (DynGraph g) => g (GenCluster a) b -> g (GenCluster a) b
 reCluster g = reClusterBy cs' g
     where
       cnts = IMap.toList $ clusterCount g
-      cPop = map fst $ sortBy (flip compare) cnts
+      cPop = map fst $ sortBy (flip compare `on` snd) cnts
       cs' = IMap.fromList $ zip cPop [1..]
 
 -- | Change the cluster values using the given lookup 'IntMap'.
