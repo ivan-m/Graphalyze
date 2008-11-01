@@ -50,7 +50,7 @@ import Control.Arrow(second)
 
 -- | The library version.
 version :: String
-version = "0.4"
+version = "0.5"
 
 {- |
    This represents the information that's being passed in that we want
