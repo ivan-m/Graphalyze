@@ -89,7 +89,6 @@ import Data.IntMap(IntMap)
 import Control.Monad
 import Control.Arrow
 import System.Random
-import System.IO.Unsafe(unsafePerformIO)
 
 -- -----------------------------------------------------------------------------
 
@@ -191,17 +190,6 @@ nlmap f = gmap f'
    from "Data.GraphViz" have been re-exported.
 -}
 
--- | Pass the plain graph through 'graphToGraph'.  This is an IO action,
---   however since the state doesn't change it's safe to use 'unsafePerformIO'
---   to convert this to a normal function.
-dotizeGraph   :: (DynGraph gr, Ord b) => gr a b
-              -> gr (AttributeNode a) (AttributeEdge b)
-dotizeGraph g = unsafePerformIO
-                $ graphToGraph g gAttrs noAttrs noAttrs
-    where
-      gAttrs = []
-      noAttrs = const []
-
 -- | Convert the graph into one with positions stored in the node labels.
 toPosGraph :: (DynGraph gr, Ord b) => gr a b -> gr (PosLabel a) b
 toPosGraph = nlmap getPos . emap rmAttrs . dotizeGraph
@@ -217,7 +205,9 @@ toPosGraph = nlmap getPos . emap rmAttrs . dotizeGraph
                                  }
           where
             -- Assume that positions can't be doubles.
-            (Pos (PointList ((Point x y):_))) = fromJust $ find isPoint as
+            -- Also assuming that we're not dealing with a
+            -- spline-type point.
+            (Pos (PointPos (Point x y))) = fromJust $ find isPoint as
 
 -- | Returns the positions of the nodes in the graph, as found using Graphviz.
 getPositions :: (DynGraph gr, Ord b) => gr a b -> [PosLabel a]

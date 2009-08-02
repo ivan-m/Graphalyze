@@ -26,7 +26,6 @@ module Data.Graph.Analysis.Reporting
     ) where
 
 import Data.GraphViz
-import Data.GraphViz.Attributes
 import Data.Graph.Analysis.Visualisation
 
 import Data.Maybe
@@ -74,10 +73,10 @@ class DocumentGenerator dg where
     docExtension   :: dg -> String
 
 -- | Representation of a location, either on the internet or locally.
-data Location = URL String | File FilePath
+data Location = Web String | File FilePath
 
 instance Show Location where
-    show (URL url) = url
+    show (Web url) = url
     show (File fp) = fp
 
 -- | Elements of a document.
@@ -176,7 +175,7 @@ graphImage fp gfp as link (fn,inl,ag)
 -- | Create the "Data.GraphViz" 'Size' 'Attribute' using the given width
 --   and a 6:4 width:height ratio.
 createSize   :: Double -> Attribute
-createSize w = Size w (w*4/6)
+createSize w = Size $ PointD w (w*4/6)
 
 -- | Replace all @.@ with @-@ in the given 'FilePath', since some output
 --   formats (e.g. LaTeX) don't like extraneous @.@'s in the filename.
