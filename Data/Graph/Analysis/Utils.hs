@@ -30,6 +30,8 @@ module Data.Graph.Analysis.Utils
       undir,
       oneWay,
       mkSimple,
+      compact,
+      compact',
       nlmap,
       -- ** Graph layout
       -- $spatial
@@ -175,6 +177,19 @@ mkSimple = gmap simplify
           where
             p' = simpleEdges n p
             s' = simpleEdges n s
+
+-- | Adjoin duplicate edges by grouping the labels together.
+compact :: (DynGraph gr) => gr a b -> gr a [b]
+compact = gmap cmpct
+    where
+      cEs = map (swap . second (map fst))
+            . groupElems snd
+      cmpct (p,n,l,s) = (cEs p, n, l, cEs s)
+
+-- | Compact the graph by counting how many multiple edges there are
+--   (considering only the two nodes and not the labels).
+compact' :: (DynGraph gr) => gr a b -> gr a Int
+compact' = emap length . compact
 
 -- | Map over the labels on the nodes, using the node values as well.
 nlmap   :: (DynGraph gr) => (LNode a -> c) -> gr a b -> gr c b
