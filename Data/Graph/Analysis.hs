@@ -43,14 +43,14 @@ import Data.Graph.Analysis.Visualisation
 import Data.Graph.Analysis.Reporting
 
 import Data.Graph.Inductive.Graph
+
 import Data.Either(partitionEithers)
-import Data.List
-import Data.Maybe
+import Data.Maybe(mapMaybe)
 import qualified Data.Map as M
 import Data.Map(Map)
 import qualified Data.Set as S
 import Data.Set(Set)
-import Control.Arrow((***),second)
+import Control.Arrow(second)
 import Control.Monad(liftM)
 
 -- -----------------------------------------------------------------------------
@@ -111,7 +111,7 @@ importData params = GraphData { graph = dGraph
       validNode l = liftM (flip (,) l) $ M.lookup l nodeMap
       -- Construct the root nodes
       rootNodes = if isDir
-                  then catMaybes $ map validNode (roots params)
+                  then mapMaybe validNode (roots params)
                   else []
       -- Construct the graph.
       dGraph = mkGraph lNodes graphEdges
@@ -135,7 +135,9 @@ relsToEs isDir lns rs = (unRs, graphEdges)
       -- The valid edges in the graph.
       (unRs, gEdges) = partitionEithers
                        $ map validEdge rs
-      dupSwap' = if isDir then id else (concatMap dupSwap)
+      dupSwap' = if isDir
+                 then id
+                 else concatMap dupSwap
       dupSwap (x,y) | x == y    = [(x,y)]
                     | otherwise = [(x,y), (y,x)]
       graphEdges = map addLabel $ dupSwap' gEdges
@@ -222,14 +224,14 @@ lengthAnalysis as = (av,stdDev,as'')
    * Unexpected roots (i.e. those roots that aren't present in
      'wantedRoots').
  -}
-classifyRoots    :: (Eq a) => GraphData a -> ([LNode a], [LNode a], [LNode a])
+classifyRoots    :: (Ord a) => GraphData a -> ([LNode a], [LNode a], [LNode a])
 classifyRoots gd = (areWanted, notRoots, notWanted)
     where
-      wntd = wantedRoots gd
-      rts = applyAlg rootsOf gd
-      areWanted = intersect wntd rts
-      notRoots = wntd \\ rts
-      notWanted = rts \\ wntd
+      wntd = S.fromList $ wantedRoots gd
+      rts = S.fromList $ applyAlg rootsOf gd
+      areWanted = S.toList $ S.intersection wntd rts
+      notRoots  = S.toList $ S.difference wntd rts
+      notWanted = S.toList $ S.difference rts wntd
 
 -- | Only return those chains (see 'chainsIn') where the non-initial
 --   nodes are /not/ expected roots.
