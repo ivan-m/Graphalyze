@@ -175,6 +175,10 @@ mapAllNodes f gd = gd { graph = nmap f $ graph gd
 
 -- | Apply the first function to nodes in the graph, and the second
 --   function to those unknown datums in 'unusedRelationships'.
+--   As a sample reason for this function, it can be used to apply a
+--   two-part constructor (e.g. 'Left' and 'Right' from 'Either') to
+--   the nodes such that the wanted and unwanted datums can be
+--   differentiated before calling 'mergeUnused'.
 mapNodeType          :: (Ord a) => (a -> b) -> (a -> b)
                         -> GraphData a -> GraphData b
 mapNodeType fk fu gd = gd { graph = nmap fk $ graph gd
