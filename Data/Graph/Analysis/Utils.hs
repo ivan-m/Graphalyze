@@ -250,7 +250,7 @@ reClusterBy   :: (DynGraph g) => IntMap Int -> g (GenCluster a) b
               -> g (GenCluster a) b
 reClusterBy m = nmap newClust
     where
-      newClust c = c { clust = m IMap.! (clust c) }
+      newClust c = c { clust = m IMap.! clust c }
 
 -- | Create an 'IntMap' of the size of each cluster.
 clusterCount :: (Graph g) => g (GenCluster a) b -> IntMap Int
@@ -458,20 +458,20 @@ statistics' as = (av', stdDev')
 -- Other utility functions.
 
 -- | Find the fixed point of a function with the given initial value.
-fixPoint   :: (Eq a) => (a -> a) -> a -> a
-fixPoint f = fixPointBy (==) f
+fixPoint :: (Eq a) => (a -> a) -> a -> a
+fixPoint = fixPointBy (==)
 
 -- | Find the fixed point of a function with the given initial value,
 --   using the given equality function.
 fixPointBy       :: (a -> a -> Bool) -> (a -> a) -> a -> a
-fixPointBy eq f x = if (eq x x')
+fixPointBy eq f x = if eq x x'
                     then x'
                     else fixPointBy eq f x'
     where
       x' = f x
 -- | Find the fixed point of a graph transformation function.
-fixPointGraphs   :: (Eq a, Eq b, Graph g) => (g a b -> g a b) -> g a b -> g a b
-fixPointGraphs f = fixPointBy equal f
+fixPointGraphs :: (Eq a, Eq b, Graph g) => (g a b -> g a b) -> g a b -> g a b
+fixPointGraphs = fixPointBy equal
 
 -- | Squaring a number.
 sq   :: (Num a) => a -> a
