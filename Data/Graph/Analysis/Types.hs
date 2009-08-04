@@ -26,7 +26,7 @@ module Data.Graph.Analysis.Types
     ) where
 
 import Data.Graph.Inductive.Graph
-import Data.Graph.Inductive.Tree
+import Data.Graph.Inductive.PatriciaTree
 
 -- -----------------------------------------------------------------------------
 
@@ -50,7 +50,6 @@ data GraphData a = GraphData { -- | We use a graph type with no edge labels.
                                --   graph.
                                unusedRelationships :: [(a,a)]
                              }
-                   deriving (Show)
 
 -- | We use a basic tree-based graph by default.
 type AGr a = Gr a ()
