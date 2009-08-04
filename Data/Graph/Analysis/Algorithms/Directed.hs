@@ -44,8 +44,9 @@ import Data.Graph.Inductive.Graph
  -}
 
 -- | Determine if this 'LNode' is an ending node.
-endNode :: (Graph g) => (g a b -> Node -> NGroup) -> g a b -> LNode a -> Bool
-endNode f g ln = endNode' f g (node ln)
+endNode     :: (Graph g) => (g a b -> Node -> NGroup)
+               -> g a b -> LNode a -> Bool
+endNode f g = endNode' f g . node
 
 -- | Determine if this 'Node' is an ending node.
 endNode'       :: (Graph g) => (g a b -> Node -> NGroup) -> g a b -> Node
@@ -57,12 +58,12 @@ endNode' f g n = case (f g n) of
                   _    -> False
 
 -- | Find all 'LNode's that meet the ending criteria.
-endBy   :: (Graph g) => (g a b -> Node -> NGroup) -> g a b -> LNGroup a
-endBy f = filterNodes (endNode f)
+endBy :: (Graph g) => (g a b -> Node -> NGroup) -> g a b -> LNGroup a
+endBy = filterNodes . endNode
 
 -- | Find all 'Node's that match the ending criteria.
-endBy'   :: (Graph g) => (g a b -> Node -> NGroup) -> g a b -> NGroup
-endBy' f = filterNodes' (endNode' f)
+endBy' :: (Graph g) => (g a b -> Node -> NGroup) -> g a b -> NGroup
+endBy' = filterNodes' . endNode'
 
 -- -----------------------------------------------------------------------------
 
