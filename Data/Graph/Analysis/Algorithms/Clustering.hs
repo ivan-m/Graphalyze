@@ -111,8 +111,8 @@ whisper gr g (p,n,al,s) = (g',(p,n,al { clust = w' },s))
                   -- extra weighting, as it seems to give better results.
                   ns -> chooseWhisper g (addLabels gr (n:ns))
 
--- | Choose which cluster to pick by taking the one with maximum sum of
---   weightings.  If more than one has the same maximum, choose one
+-- | Choose which cluster to pick by taking the one with maximum number of
+--   nodes.  If more than one has the same maximum, choose one
 --   randomly.
 chooseWhisper       :: (RandomGen g) => g -> [LNode (GenCluster a)]
                     -> (Int,g)
@@ -325,7 +325,6 @@ collapse g n1 n2 = if (n1 == n2)
       (Just c2, g'') = match n2 g'
       -- The new edges.
       nbrBy f = map (\(a,b) -> (b,a))
-                -- not sure if this should be included: . nub
                 . filter (\(n,_) -> notElem n [n1,n2])
                 $ (f c1 ++ f c2)
       p = nbrBy lpre'
