@@ -30,7 +30,7 @@ import Data.Graph.Analysis.Visualisation
 
 import Data.Maybe
 import Data.Time
-import Control.Exception
+import Control.Exception.Extensible
 import System.Directory
 import System.FilePath
 import System.Locale
@@ -122,7 +122,8 @@ today = do zoneT <- getZonedTime
 --   if successful (or if the directory already exists), @False@
 --   if an error occurred.
 tryCreateDirectory    :: FilePath -> IO Bool
-tryCreateDirectory fp = do r <- try $ mkDir fp
+tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
+                                $ mkDir fp
                            return (isRight r)
     where
       mkDir = createDirectoryIfMissing True
