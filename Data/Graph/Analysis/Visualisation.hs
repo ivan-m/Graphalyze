@@ -6,14 +6,10 @@
    Maintainer  : Ivan.Miljenovic@gmail.com
 
    Functions to assist in visualising graphs and components of graphs.
-   This module uses code licensed under the 3-Clause BSD license from
-   the /mohws/ project:
-   <http://code.haskell.org/mohws/src/Util.hs>
  -}
 module Data.Graph.Analysis.Visualisation
     ( -- * Graph visualisation
       -- $graphviz
-      -- ** Producing 'DotGraph's
       graphviz,
       graphvizClusters,
       -- * Showing node groupings
@@ -34,9 +30,6 @@ import System.IO
 import Control.Concurrent
 import Control.Exception
 
--- Import this when the parsing stuff is finished
--- import Text.ParserCombinators.PolyLazy
-
 -- -----------------------------------------------------------------------------
 
 {- $graphviz
@@ -51,7 +44,7 @@ graphviz        :: (Graph g, Show a, Ord b) => String -> g a b -> [Attribute]
                 -> DotGraph
 graphviz t g as = graphToDot g attrs nattrs eattrs
     where
-      attrs = (Label $ StrLabel t) : as
+      attrs = Label (StrLabel t) : as
       nattrs (_,a) = [Label . StrLabel $ show a]
       eattrs _ = []
 
@@ -62,7 +55,7 @@ graphvizClusters :: (Graph g, Show c, ClusterLabel a c, Ord b) =>
                     String -> g a b -> [Attribute] -> DotGraph
 graphvizClusters t g as = clusterGraphToDot g atts assignCluster cas nas eas
     where
-      atts = (Label $ StrLabel t) : as
+      atts = Label (StrLabel t) : as
       cas c = [Label . StrLabel $ show c]
       nas (_,a) = [Label . StrLabel $ nodelabel a]
       eas _ = []
