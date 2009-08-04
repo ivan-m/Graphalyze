@@ -72,7 +72,9 @@ module Data.Graph.Analysis.Utils
       fixPointGraphs,
       fixPointBy,
       sq,
-      fI
+      fI,
+      swap,
+      applyBoth
     ) where
 
 import Data.Graph.Analysis.Types
@@ -478,3 +480,11 @@ sq x = x * x
 -- | Shorthand for 'fromIntegral'
 fI :: (Num a) => Int -> a
 fI = fromIntegral
+
+-- | Flip a pair.
+swap       :: (a,b) -> (b,a)
+swap (a,b) = (b,a)
+
+-- | Apply the same function to both elements of a pair.
+applyBoth :: (a -> b) -> (a,a) -> (b,b)
+applyBoth f = f *** f

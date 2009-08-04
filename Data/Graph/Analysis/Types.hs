@@ -40,7 +40,15 @@ import Data.Graph.Inductive.Tree
 data GraphData a = GraphData { -- | We use a graph type with no edge labels.
                                graph :: AGr a,
                                -- | The expected roots in the graph.
-                               wantedRoots :: LNGroup a
+                               wantedRoots :: LNGroup a,
+                               -- | Is the data this graph represents
+                               --   directed in nature?
+                               directedData :: Bool,
+                               -- | Unused relationships (i.e. not in
+                               --   the actual graph).  These are the
+                               --   edges containing nodes not in the
+                               --   graph.
+                               unusedRelationships :: [(a,a)]
                              }
                    deriving (Show)
 

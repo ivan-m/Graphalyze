@@ -25,7 +25,9 @@ module Data.Graph.Analysis
       ImportParams(..),
       defaultParams,
       importData,
-      manipulateNodes,
+      mergeUnused,
+      mapAllNodes,
+      mapNodeType,
       -- * Result analysis
       -- $analfuncts
       lengthAnalysis,
@@ -41,10 +43,15 @@ import Data.Graph.Analysis.Visualisation
 import Data.Graph.Analysis.Reporting
 
 import Data.Graph.Inductive.Graph
+import Data.Either(partitionEithers)
 import Data.List
 import Data.Maybe
 import qualified Data.Map as M
-import Control.Arrow(second)
+import Data.Map(Map)
+import qualified Data.Set as S
+import Data.Set(Set)
+import Control.Arrow((***),second)
+import Control.Monad(liftM)
 
 -- -----------------------------------------------------------------------------
 
@@ -71,10 +78,10 @@ data ImportParams a = Params { -- | The discrete points.
 
 -- | Default values for 'ImportParams', with no roots and a directed graph.
 defaultParams :: ImportParams a
-defaultParams = Params { dataPoints = [],
+defaultParams = Params { dataPoints    = [],
                          relationships = [],
-                         roots = [],
-                         directed = True
+                         roots         = [],
+                         directed      = True
                        }
 
 {- |
@@ -82,45 +89,104 @@ defaultParams = Params { dataPoints = [],
    /edge-safe/: if any datums are listed in the edges of
    'ImportParams' that aren't listed in the data points, then those
    edges are ignored.  Thus, no sanitation of the 'relationships' in
-   @ImportParams@ is necessary.
+   @ImportParams@ is necessary.  The unused relations are stored in
+   'unusedRelationships'.  Note that it is assumed that all datums in
+   'roots' are also contained within 'dataPoints'.
  -}
 importData        :: (Ord a) => ImportParams a -> GraphData a
-importData params = GraphData { graph = dGraph, wantedRoots = rootNodes }
+importData params = GraphData { graph = dGraph
+                              , wantedRoots = rootNodes
+                              , directedData = isDir
+                              , unusedRelationships = unRs
+                              }
     where
+      isDir = directed params
       -- Adding Node values to each of the data points.
       lNodes = zip [1..] (dataPoints params)
+      -- The valid edges in the graph along with the unused relationships.
+      (unRs, graphEdges) = relsToEs isDir lNodes (relationships params)
       -- Creating a lookup map from the label to the @Node@ value.
-      nodeMap = M.fromList $ map (uncurry (flip (,))) lNodes
-      -- Find the Node value for the given data point.
-      findNode n = M.lookup n nodeMap
+      nodeMap = mkNodeMap lNodes
+      -- Validate a node
+      validNode l = liftM (flip (,) l) $ M.lookup l nodeMap
+      -- Construct the root nodes
+      rootNodes = if isDir
+                  then catMaybes $ map validNode (roots params)
+                  else []
+      -- Construct the graph.
+      dGraph = mkGraph lNodes graphEdges
+
+mkNodeMap :: (Ord a) => [LNode a] -> Map a Node
+mkNodeMap = M.fromList . map swap
+
+relsToEs              :: (Ord a) => Bool -> [LNode a]
+                         -> [(a,a)] -> ([(a,a)], [UEdge])
+relsToEs isDir lns rs = (unRs, graphEdges)
+    where
+      -- Creating a lookup map from the label to the @Node@ value.
+      nodeMap = mkNodeMap lns
+      findNode v = M.lookup v nodeMap
       -- Validate a edge after looking its values up.
-      validEdge (v1,v2) = case (findNode v1, findNode v2) of
-                            (Just x, Just y) -> Just $ addLabel (x,y)
-                            _                -> Nothing
+      validEdge e@(v1,v2) = case (findNode v1, findNode v2) of
+                              (Just x, Just y) -> Right (x,y)
+                              _                -> Left e
       -- Add an empty edge label.
       addLabel (x,y) = (x,y,())
       -- The valid edges in the graph.
-      graphEdges = catMaybes $ map validEdge (relationships params)
-      -- Validate a node
-      validNode l = case (findNode l) of
-                      (Just n) -> Just (n,l)
-                      _        -> Nothing
-      -- Construct the root nodes
-      rootNodes = if (directed params)
-                  then catMaybes $ map validNode (roots params)
-                  else []
-      -- Make the graph undirected if necessary.
-      setDirection = if (directed params) then id else undir
-      -- Construct the graph.
-      dGraph = setDirection $ mkGraph lNodes graphEdges
+      (unRs, gEdges) = partitionEithers
+                       $ map validEdge rs
+      dupSwap' = if isDir then id else (concatMap dupSwap)
+      dupSwap (x,y) | x == y    = [(x,y)]
+                    | otherwise = [(x,y), (y,x)]
+      graphEdges = map addLabel $ dupSwap' gEdges
+
+-- | Merge the 'unusedRelationships' into the graph by adding the
+--   appropriate nodes.
+mergeUnused    :: (Ord a) => GraphData a -> GraphData a
+mergeUnused gd = gd { graph = insEdges es' gr
+                    , unusedRelationships = []
+                    }
+    where
+      gr = graph gd
+      unRs = unusedRelationships gd
+      mkS f = S.fromList $ map f unRs
+      unNs = S.toList
+             . flip S.difference (knownNodes gd)
+             $ S.union (mkS fst) (mkS snd)
+      ns' = newNodes (length unNs) gr
+      gr' = flip insNodes gr $ zip ns' unNs
+      -- Should no longer contain any unused rels.
+      es' = snd $ relsToEs (directedData gd)
+                           (labNodes gr)
+                           unRs
+
+knownNodes :: (Ord a) => GraphData a -> Set a
+knownNodes = S.fromList . map snd . labNodes . graph
 
 -- | Apply a function to the nodes after processing.
 --   This might be useful in circumstances where you want to
 --   reduce the data type used to a simpler one, etc.
-manipulateNodes      :: (a -> b) -> GraphData a -> GraphData b
-manipulateNodes f gd = gd { graph = nmap f (graph gd)
-                          , wantedRoots = map (second f) (wantedRoots gd)
+mapAllNodes      :: (a -> b) -> GraphData a -> GraphData b
+mapAllNodes f gd = gd { graph = nmap f $ graph gd
+                      , wantedRoots = map (second f) $ wantedRoots gd
+                      , unusedRelationships = map (applyBoth f)
+                                              $ unusedRelationships gd
+                      }
+
+-- | Apply the first function to nodes in the graph, and the second
+--   function to those unknown datums in 'unusedRelationships'.
+mapNodeType          :: (Ord a) => (a -> b) -> (a -> b)
+                        -> GraphData a -> GraphData b
+mapNodeType fk fu gd = gd { graph = nmap fk $ graph gd
+                          , wantedRoots = map (second fk) $ wantedRoots gd
+                          , unusedRelationships = map (applyBoth f)
+                                                  $ unusedRelationships gd
                           }
+    where
+      knownNs = knownNodes gd
+      f n = if S.member n knownNs
+            then fk n
+            else fu n
 
 -- -----------------------------------------------------------------------------
 
