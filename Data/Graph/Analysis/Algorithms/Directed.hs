@@ -23,12 +23,18 @@ module Data.Graph.Analysis.Algorithms.Directed
       isSingleton, isSingleton',
       -- * Subgraphs
       coreOf,
+      -- * Other
+      leafMinPaths
     ) where
 
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 
 import Data.Graph.Inductive.Graph
+import Data.Graph.Inductive.Query.BFS(esp)
+
+import Data.List(minimumBy)
+import Data.Function(on)
 
 -- -----------------------------------------------------------------------------
 {- $ends
@@ -145,3 +151,23 @@ coreOf = fixPointGraphs stripEnds
           where
             roots = rootsOf' gr'
             leaves = leavesOf' gr'
+
+{- |
+   The shortest paths to each of the leaves in the graph (excluding
+   singletons).  This can be used to obtain an indication of the
+   overall height/depth of the graph.
+ -}
+leafMinPaths   :: (Graph g) => g a b -> [LNGroup a]
+leafMinPaths g = map (lfMinPth g rs) ls
+    where
+      rs = rootsOf' g
+      ls = leavesOf' g
+
+-- | Given the list of roots in this graph, find the shortest path to
+--   this leaf node.
+lfMinPth        :: (Graph g) => g a b -> [Node] -> Node -> LNGroup a
+lfMinPth g rs l = addLabels g
+                  . snd
+                  . minimumBy (compare `on` fst)
+                  . addLengths
+                  $ map (\ r -> esp r l g) rs
