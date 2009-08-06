@@ -23,6 +23,8 @@ module Data.Graph.Analysis.Algorithms.Directed
       isSingleton, isSingleton',
       -- * Subgraphs
       coreOf,
+      -- * Clustering
+      levelGraph,
       -- * Other
       leafMinPaths
     ) where
@@ -33,8 +35,11 @@ import Data.Graph.Analysis.Utils
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Query.BFS(esp)
 
-import Data.List(minimumBy)
+import Data.List(minimumBy, unfoldr)
 import Data.Function(on)
+import qualified Data.Map as M
+import qualified Data.Set as S
+import Data.Set(Set)
 
 -- -----------------------------------------------------------------------------
 {- $ends
@@ -151,6 +156,46 @@ coreOf = fixPointGraphs stripEnds
           where
             roots = rootsOf' gr'
             leaves = leavesOf' gr'
+
+-- -----------------------------------------------------------------------------
+
+{- |
+   Cluster the nodes in the graph based upon how far away they are
+   from a root node.  Root nodes are in the cluster labelled "0",
+   nodes in level "n" are at least /n/ edges away from a root node.
+-}
+levelGraph   :: (Ord a) => (DynGraph g) => g a b -> g (GenCluster a) b
+levelGraph g = gmap addLbl g
+    where
+      lvls = zip [0..] . map S.toList $ graphLevels g
+      lvMap = M.fromList
+              $ concatMap (\(l,ns) -> map (flip (,) l) ns) lvls
+      mkLbl n l = GC { clust = lvMap M.! n
+                     , nLbl  = l
+                     }
+
+      addLbl (p,n,l,s) = (p, n, mkLbl n l, s)
+
+type NSet = Set Node
+
+-- | Obtain the levels in the graph.
+graphLevels   :: (DynGraph g) => g a b -> [NSet]
+graphLevels g = unfoldr getNextLevel
+                 (S.fromList $ rootsOf' g, g)
+
+getNextLevel :: (DynGraph g) => (NSet, g a b)
+                -> Maybe (NSet, (NSet, g a b))
+getNextLevel (ns,g)
+    | S.null ns = Nothing
+    | otherwise = Just (ns, (ns', g'))
+    where
+      g' = delNodes (S.toList ns) g
+      ns' = flip S.difference ns
+            . S.unions . S.toList
+            $ S.map getSuc ns
+      getSuc = S.fromList . suc g
+
+-- -----------------------------------------------------------------------------
 
 {- |
    The shortest paths to each of the leaves in the graph (excluding
