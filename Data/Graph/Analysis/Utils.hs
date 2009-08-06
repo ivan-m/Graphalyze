@@ -35,10 +35,6 @@ module Data.Graph.Analysis.Utils
       nlmap,
       -- ** Graph layout
       -- $spatial
-      -- These next two are re-exported from "Data.GraphViz"
-      AttributeNode,
-      AttributeEdge,
-      dotizeGraph,
       toPosGraph,
       getPositions,
       -- ** Cluster functions
