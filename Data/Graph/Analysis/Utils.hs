@@ -33,6 +33,7 @@ module Data.Graph.Analysis.Utils
       compact,
       compact',
       nlmap,
+      delLNodes,
       -- ** Graph layout
       -- $spatial
       toPosGraph,
@@ -192,6 +193,10 @@ nlmap   :: (DynGraph gr) => (LNode a -> c) -> gr a b -> gr c b
 nlmap f = gmap f'
     where
       f' (p,n,l,s) = (p,n,f (n,l),s)
+
+-- | Delete these labelled nodes from the graph.
+delLNodes :: (DynGraph gr) => LNGroup a -> gr a b -> gr a b
+delLNodes = delNodes . map fst
 
 -- -----------------------------------------------------------------------------
 
