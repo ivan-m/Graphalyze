@@ -165,6 +165,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
       opts = writerOptions { writerHeader = (header p) }
       convert = (writer p) opts
       file = dir </> (fileFront d) <.> (extension p)
+      tryWrite :: String -> IO (Either SomeException ())
       tryWrite = try . writeFile file
       success = return (Just file)
       failDoc = removeDirectoryRecursive dir >> return Nothing
@@ -189,7 +190,7 @@ htmlInfo auth dt = RawHtml html
 
 -- | Link conversion
 loc2target             :: Location -> Target
-loc2target (URL url)   = (url,"")
+loc2target (Web url)   = (url,"")
 loc2target (File file) = (file,"")
 
 -- | Conversion of simple inline elements.
