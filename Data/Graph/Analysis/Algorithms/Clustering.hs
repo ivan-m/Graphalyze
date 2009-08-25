@@ -187,15 +187,15 @@ clusteringCoef g n = if (liftM2 (||) isNaN isInfinite $ coef)
 
 -- | The renamed CLUSTER algorithm.  Attempts to cluster a graph by using
 --   the spatial locations used by Graphviz.
-relativeNeighbourhood   :: (DynGraph gr, Eq a, Ord b) => gr a b
-                        -> gr (GenCluster a) b
-relativeNeighbourhood g = setCluster cMap g
+relativeNeighbourhood       :: (DynGraph gr, Eq a, Ord b) => Bool -> gr a b
+                               -> gr (GenCluster a) b
+relativeNeighbourhood dir g = setCluster cMap g
     where
       cMap = createLookup $ rn g
       rn g' = nbrCluster rng
           where
             rng :: Gr () Int
-            rng = makeRNG $ getPositions g'
+            rng = makeRNG $ getPositions dir g'
 
 -- | We take the ceiling of the Euclidian distance function to use as our
 --   metric function.

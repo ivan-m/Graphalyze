@@ -42,7 +42,6 @@ module Data.Graph.Analysis.Utils
       -- $cluster
       createLookup,
       setCluster,
-      assignCluster,
       reCluster,
       reClusterBy,
       clusterCount,
@@ -79,7 +78,10 @@ module Data.Graph.Analysis.Utils
 import Data.Graph.Analysis.Types
 
 import Data.Graph.Inductive.Graph
-import Data.GraphViz
+import Data.GraphViz( dotizeGraph
+                    , Attribute(..)
+                    , Pos(..)
+                    , Point(..))
 
 import Data.List
 import Data.Maybe
@@ -201,21 +203,20 @@ delLNodes = delNodes . map fst
 -- -----------------------------------------------------------------------------
 
 {- $spatial
-   Spatial positioning of graphs.  Use the 'graphToGraph' function in
+   Spatial positioning of graphs.  Use the 'dotizeGraph' function in
    "Data.GraphViz" to determine potential graph layouts.
-
-   Note that for convenience sake, 'AttributeNode' and 'AttributeEdge'
-   from "Data.GraphViz" have been re-exported.
 -}
 
--- | Convert the graph into one with positions stored in the node labels.
-toPosGraph :: (DynGraph gr, Ord b) => gr a b -> gr (PosLabel a) b
-toPosGraph = nlmap getPos . emap rmAttrs . dotizeGraph
+-- | Convert the graph into one with positions stored in the node
+--   labels.  The 'Bool' parameter denotes if the graph is directed or
+--   not.
+toPosGraph     :: (DynGraph gr, Ord b) => Bool -> gr a b -> gr (PosLabel a) b
+toPosGraph dir = nlmap getPos . emap rmAttrs . dotizeGraph dir
     where
       rmAttrs = snd
       isPoint attr = case attr of
-                       (Pos _) -> True
-                       _       -> False
+                       Pos{} -> True
+                       _     -> False
       getPos (n,(as,l)) = PLabel { xPos   = x
                                  , yPos   = y
                                  , pnode  = n
@@ -227,9 +228,11 @@ toPosGraph = nlmap getPos . emap rmAttrs . dotizeGraph
             -- spline-type point.
             (Pos (PointPos (Point x y))) = fromJust $ find isPoint as
 
--- | Returns the positions of the nodes in the graph, as found using Graphviz.
-getPositions :: (DynGraph gr, Ord b) => gr a b -> [PosLabel a]
-getPositions = map label . labNodes . toPosGraph
+-- | Returns the positions of the nodes in the graph, as found using
+--   Graphviz.  The 'Bool' parameter denotes if the graph is directed
+--   or not.
+getPositions     :: (DynGraph gr, Ord b) => Bool -> gr a b -> [PosLabel a]
+getPositions dir = map label . labNodes . toPosGraph dir
 
 -- -----------------------------------------------------------------------------
 
@@ -246,11 +249,6 @@ setCluster   :: (DynGraph gr) => IntMap Int -> gr a b -> gr (GenCluster a) b
 setCluster m = nlmap assClust
     where
       assClust (n,l) = GC (m IMap.! n) l
-
--- | A function to convert an 'LNode' to the required 'NodeCluster'
---   for use with the 'Graphviz' library.
-assignCluster :: (ClusterLabel a c) => LNode a -> NodeCluster c a
-assignCluster nl@(_,a) = C (cluster a) (N nl)
 
 -- | Change the cluster values in the graph by having the largest cluster
 --   have the smallest cluster label.

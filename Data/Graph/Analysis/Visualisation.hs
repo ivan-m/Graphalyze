@@ -33,32 +33,47 @@ import Control.Exception
 -- -----------------------------------------------------------------------------
 
 {- $graphviz
-   Simple wrappers around the Haskell "Data.GraphViz" library to
-   turn 'Graph's into basic 'DotGraph's for processing by the Graphviz
-   application.
+   Simple wrappers around the Haskell "Data.GraphViz" library to turn
+   'GraphData's into basic 'DotGraph's for processing by the GraphViz
+   suite of applications.
 -}
 
--- | Turns the graph into 'DotGraph' format with the given title and graph
---   attributes.  Nodes are labelled, edges aren't.
-graphviz        :: (Graph g, Show a, Ord b) => String -> g a b -> [Attribute]
-                -> DotGraph
-graphviz t g as = graphToDot g attrs nattrs eattrs
+-- | Convert the 'GraphData' into 'DotGraph' format with the given
+--   'Attribute's.
+graphviz           :: GraphData a -> [GlobalAttributes]
+                      -> (LNode a -> Attributes) -> DotGraph Node
+graphviz g gas nas = graphToDot (directedData g) (graph g) gas nas eas
     where
-      attrs = Label (StrLabel t) : as
-      nattrs (_,a) = [Label . StrLabel $ show a]
-      eattrs _ = []
+      eas = const []
 
--- | Turns the graph into 'DotGraph' format with the given title and graph
---   attributes.  Cluster the nodes based upon their 'ClusterLabel' clusters.
---   Nodes and clusters are labelled, edges aren't.
-graphvizClusters :: (Graph g, Show c, ClusterLabel a c, Ord b) =>
-                    String -> g a b -> [Attribute] -> DotGraph
-graphvizClusters t g as = clusterGraphToDot g atts assignCluster cas nas eas
+-- | Convert the clustered 'GraphData' into 'DotGraph' format with the
+--   given 'Attribute's.  Cluster the nodes based upon their
+--   'ClusterLabel' clusters.
+graphvizClusters :: (ClusterLabel a c) => GraphData a -> [GlobalAttributes]
+                    -> (c -> [GlobalAttributes]) -> (LNode a -> Attributes)
+                    -> DotGraph Node
+graphvizClusters g gas = graphvizClusters' g gas assignCluster
+
+-- | Convert the 'GraphData' into a clustered 'DotGraph' format using
+--   the given clustering function and with the given 'Attribute's.
+graphvizClusters' :: (Ord c) => GraphData a -> [GlobalAttributes]
+                     -> (LNode a -> NodeCluster c a)
+                     -> (c -> [GlobalAttributes]) -> (LNode a -> Attributes)
+                     -> DotGraph Node
+graphvizClusters' g gas fc cas nas = clusterGraphToDot (directedData g)
+                                                       (graph g)
+                                                       gas
+                                                       fc
+                                                       cas
+                                                       nas
+                                                       eas
     where
-      atts = Label (StrLabel t) : as
-      cas c = [Label . StrLabel $ show c]
-      nas (_,a) = [Label . StrLabel $ nodelabel a]
-      eas _ = []
+      eas = const []
+
+-- | A function to convert an 'LNode' to the required 'NodeCluster'
+--   for use with the 'Graphviz' library.
+assignCluster :: (ClusterLabel a c) => LNode a -> NodeCluster c a
+assignCluster nl@(_,a) = C (cluster a) (N nl)
 
 -- -----------------------------------------------------------------------------
 

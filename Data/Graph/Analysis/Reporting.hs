@@ -25,6 +25,7 @@ module Data.Graph.Analysis.Reporting
       unDotPath
     ) where
 
+import Data.Graph.Inductive(Node)
 import Data.GraphViz
 import Data.Graph.Analysis.Visualisation
 
@@ -97,7 +98,7 @@ data DocInline = Text String
                | DocImage DocInline Location
 
 -- | Let the 'DocumentGenerator' instance apply extra settings, such as size.
-type AttrsToGraph = [Attribute] -> DotGraph
+type AttrsToGraph = [Attribute] -> DotGraph Node
 
 type DocGraph = (FilePath,DocInline,AttrsToGraph)
 
