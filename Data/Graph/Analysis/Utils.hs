@@ -22,7 +22,7 @@ module Data.Graph.Analysis.Utils
       labels,
       edge,
       eLabel,
-      addLabels,
+      addLabels, -- Re-exported from Internal
       filterNodes,
       filterNodes',
       pathValues,
@@ -68,13 +68,10 @@ module Data.Graph.Analysis.Utils
       -- * Other functions
       fixPoint,
       fixPointGraphs,
-      fixPointBy,
-      sq,
-      fI,
-      swap,
-      applyBoth
+      fixPointBy
     ) where
 
+import Data.Graph.Analysis.Internal
 import Data.Graph.Analysis.Types
 
 import Data.Graph.Inductive.Graph
@@ -116,11 +113,6 @@ edge (n1,n2,_) = (n1,n2)
 -- | The label of an 'LEdge'.
 eLabel         :: LEdge b -> b
 eLabel (_,_,b) = b
-
--- | Obtain the labels for a list of 'Node's.
---   It is assumed that each 'Node' is indeed present in the given graph.
-addLabels    :: (Graph g) => g a b -> [Node] -> [LNode a]
-addLabels gr = map (ap (,) (fromJust . lab gr))
 
 -- | Find all the labelled nodes in the graph that match the given predicate.
 filterNodes     :: (Graph g) => (g a b -> LNode a -> Bool) -> g a b -> [LNode a]
@@ -486,19 +478,3 @@ fixPointBy eq f x = if eq x x'
 -- | Find the fixed point of a graph transformation function.
 fixPointGraphs :: (Eq a, Eq b, Graph g) => (g a b -> g a b) -> g a b -> g a b
 fixPointGraphs = fixPointBy equal
-
--- | Squaring a number.
-sq   :: (Num a) => a -> a
-sq x = x * x
-
--- | Shorthand for 'fromIntegral'
-fI :: (Num a) => Int -> a
-fI = fromIntegral
-
--- | Flip a pair.
-swap       :: (a,b) -> (b,a)
-swap (a,b) = (b,a)
-
--- | Apply the same function to both elements of a pair.
-applyBoth :: (a -> b) -> (a,a) -> (b,b)
-applyBoth f = f *** f

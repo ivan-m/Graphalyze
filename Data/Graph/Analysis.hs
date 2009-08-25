@@ -25,17 +25,14 @@ module Data.Graph.Analysis
       ImportParams(..),
       defaultParams,
       importData,
-      mergeUnused,
-      mapAllNodes,
-      mapNodeType,
       -- * Result analysis
       -- $analfuncts
       lengthAnalysis,
       classifyRoots,
-      interiorChains,
-      applyAlg
+      interiorChains
     ) where
 
+import Data.Graph.Analysis.Internal
 import Data.Graph.Analysis.Utils
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Algorithms
@@ -95,7 +92,7 @@ defaultParams = Params { dataPoints    = [],
  -}
 importData        :: (Ord a) => ImportParams a -> GraphData a
 importData params = GraphData { graph = dGraph
-                              , wantedRoots = rootNodes
+                              , wantedRootNodes = rootNodes
                               , directedData = isDir
                               , unusedRelationships = unRs
                               }
@@ -111,88 +108,10 @@ importData params = GraphData { graph = dGraph
       validNode l = liftM (flip (,) l) $ M.lookup l nodeMap
       -- Construct the root nodes
       rootNodes = if isDir
-                  then mapMaybe validNode (roots params)
+                  then map fst $ mapMaybe validNode (roots params)
                   else []
       -- Construct the graph.
       dGraph = mkGraph lNodes graphEdges
-
-mkNodeMap :: (Ord a) => [LNode a] -> Map a Node
-mkNodeMap = M.fromList . map swap
-
-relsToEs              :: (Ord a) => Bool -> [LNode a]
-                         -> [(a,a)] -> ([(a,a)], [UEdge])
-relsToEs isDir lns rs = (unRs, graphEdges)
-    where
-      -- Creating a lookup map from the label to the @Node@ value.
-      nodeMap = mkNodeMap lns
-      findNode v = M.lookup v nodeMap
-      -- Validate a edge after looking its values up.
-      validEdge e@(v1,v2) = case (findNode v1, findNode v2) of
-                              (Just x, Just y) -> Right (x,y)
-                              _                -> Left e
-      -- Add an empty edge label.
-      addLabel (x,y) = (x,y,())
-      -- The valid edges in the graph.
-      (unRs, gEdges) = partitionEithers
-                       $ map validEdge rs
-      dupSwap' = if isDir
-                 then id
-                 else concatMap dupSwap
-      dupSwap (x,y) | x == y    = [(x,y)]
-                    | otherwise = [(x,y), (y,x)]
-      graphEdges = map addLabel $ dupSwap' gEdges
-
--- | Merge the 'unusedRelationships' into the graph by adding the
---   appropriate nodes.
-mergeUnused    :: (Ord a) => GraphData a -> GraphData a
-mergeUnused gd = gd { graph = insEdges es' gr
-                    , unusedRelationships = []
-                    }
-    where
-      gr = graph gd
-      unRs = unusedRelationships gd
-      mkS f = S.fromList $ map f unRs
-      unNs = S.toList
-             . flip S.difference (knownNodes gd)
-             $ S.union (mkS fst) (mkS snd)
-      ns' = newNodes (length unNs) gr
-      gr' = flip insNodes gr $ zip ns' unNs
-      -- Should no longer contain any unused rels.
-      es' = snd $ relsToEs (directedData gd)
-                           (labNodes gr)
-                           unRs
-
-knownNodes :: (Ord a) => GraphData a -> Set a
-knownNodes = S.fromList . map snd . labNodes . graph
-
--- | Apply a function to the nodes after processing.
---   This might be useful in circumstances where you want to
---   reduce the data type used to a simpler one, etc.
-mapAllNodes      :: (a -> b) -> GraphData a -> GraphData b
-mapAllNodes f gd = gd { graph = nmap f $ graph gd
-                      , wantedRoots = map (second f) $ wantedRoots gd
-                      , unusedRelationships = map (applyBoth f)
-                                              $ unusedRelationships gd
-                      }
-
--- | Apply the first function to nodes in the graph, and the second
---   function to those unknown datums in 'unusedRelationships'.
---   As a sample reason for this function, it can be used to apply a
---   two-part constructor (e.g. 'Left' and 'Right' from 'Either') to
---   the nodes such that the wanted and unwanted datums can be
---   differentiated before calling 'mergeUnused'.
-mapNodeType          :: (Ord a) => (a -> b) -> (a -> b)
-                        -> GraphData a -> GraphData b
-mapNodeType fk fu gd = gd { graph = nmap fk $ graph gd
-                          , wantedRoots = map (second fk) $ wantedRoots gd
-                          , unusedRelationships = map (applyBoth f)
-                                                  $ unusedRelationships gd
-                          }
-    where
-      knownNs = knownNodes gd
-      f n = if S.member n knownNs
-            then fk n
-            else fu n
 
 -- -----------------------------------------------------------------------------
 
@@ -242,6 +161,3 @@ interiorChains gd = filter (not . interiorRoot) chains
       rts = wantedRoots gd
       interiorRoot = any (`elem` rts) . tail
 
--- | Apply an algorithm to the data to be analysed.
-applyAlg   :: (AGr a -> b) -> GraphData a -> b
-applyAlg f = f . graph

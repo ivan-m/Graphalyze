@@ -42,7 +42,7 @@ import Control.Exception
 --   'Attribute's.
 graphviz           :: GraphData a -> [GlobalAttributes]
                       -> (LNode a -> Attributes) -> DotGraph Node
-graphviz g gas nas = graphToDot (directedData g) (graph g) gas nas eas
+graphviz g gas nas = applyDirAlg graphToDot g gas nas eas
     where
       eas = const []
 
@@ -60,13 +60,13 @@ graphvizClusters' :: (Ord c) => GraphData a -> [GlobalAttributes]
                      -> (LNode a -> NodeCluster c a)
                      -> (c -> [GlobalAttributes]) -> (LNode a -> Attributes)
                      -> DotGraph Node
-graphvizClusters' g gas fc cas nas = clusterGraphToDot (directedData g)
-                                                       (graph g)
-                                                       gas
-                                                       fc
-                                                       cas
-                                                       nas
-                                                       eas
+graphvizClusters' g gas fc cas nas = applyDirAlg clusterGraphToDot
+                                                 g
+                                                 gas
+                                                 fc
+                                                 cas
+                                                 nas
+                                                 eas
     where
       eas = const []
 

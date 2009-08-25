@@ -26,6 +26,7 @@ module Data.Graph.Analysis.Algorithms.Clustering
       cNodes
     ) where
 
+import Data.Graph.Analysis.Internal
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 import Data.Graph.Analysis.Visualisation(showNodes)
