@@ -38,7 +38,7 @@ module Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Internal
 
 import Data.Graph.Inductive.Graph
-import Data.Graph.Inductive.Tree
+import Data.Graph.Inductive.PatriciaTree
 
 import qualified Data.Set as S
 import Data.Set(Set)
@@ -158,7 +158,7 @@ updateGraph' f g = g { graph = applyDirAlg f g
                      }
 
 
--- | We use a basic tree-based graph by default.
+-- | An alias for the type of graph being used by default.
 type AGr a = Gr a ()
 
 -- | A grouping of 'Node's.
