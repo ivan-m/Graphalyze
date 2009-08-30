@@ -12,6 +12,9 @@ module Data.Graph.Analysis.Visualisation
       -- $graphviz
       graphviz,
       graphvizClusters,
+      graphvizClusters',
+      assignCluster,
+      noAttributes,
       -- * Showing node groupings
       -- $other
       showPath,
@@ -62,9 +65,14 @@ graphvizClusters' :: (Ord c) => GraphData n e -> [GlobalAttributes]
 graphvizClusters' = applyDirAlg clusterGraphToDot
 
 -- | A function to convert an 'LNode' to the required 'NodeCluster'
---   for use with the 'Graphviz' library.
-assignCluster :: (ClusterLabel a c) => LNode a -> NodeCluster c a
+--   for use with the GraphViz library.
+assignCluster          :: (ClusterLabel a c) => LNode a -> NodeCluster c a
 assignCluster nl@(_,a) = C (cluster a) (N nl)
+
+-- | Used to state that GraphViz should use the default 'Attribute's
+--   for the given value.
+noAttributes :: a -> Attributes
+noAttributes = const []
 
 -- -----------------------------------------------------------------------------
 
