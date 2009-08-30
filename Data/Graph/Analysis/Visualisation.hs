@@ -40,35 +40,26 @@ import Control.Exception
 
 -- | Convert the 'GraphData' into 'DotGraph' format with the given
 --   'Attribute's.
-graphviz           :: GraphData a -> [GlobalAttributes]
-                      -> (LNode a -> Attributes) -> DotGraph Node
-graphviz g gas nas = applyDirAlg graphToDot g gas nas eas
-    where
-      eas = const []
+graphviz :: GraphData n e -> [GlobalAttributes]
+            -> (LNode n -> Attributes)
+            -> (LEdge e -> Attributes) -> DotGraph Node
+graphviz = applyDirAlg graphToDot
 
 -- | Convert the clustered 'GraphData' into 'DotGraph' format with the
 --   given 'Attribute's.  Cluster the nodes based upon their
 --   'ClusterLabel' clusters.
-graphvizClusters :: (ClusterLabel a c) => GraphData a -> [GlobalAttributes]
-                    -> (c -> [GlobalAttributes]) -> (LNode a -> Attributes)
-                    -> DotGraph Node
+graphvizClusters :: (ClusterLabel n c) => GraphData n e -> [GlobalAttributes]
+                    -> (c -> [GlobalAttributes]) -> (LNode n -> Attributes)
+                    -> (LEdge e -> Attributes) -> DotGraph Node
 graphvizClusters g gas = graphvizClusters' g gas assignCluster
 
 -- | Convert the 'GraphData' into a clustered 'DotGraph' format using
 --   the given clustering function and with the given 'Attribute's.
-graphvizClusters' :: (Ord c) => GraphData a -> [GlobalAttributes]
-                     -> (LNode a -> NodeCluster c a)
-                     -> (c -> [GlobalAttributes]) -> (LNode a -> Attributes)
-                     -> DotGraph Node
-graphvizClusters' g gas fc cas nas = applyDirAlg clusterGraphToDot
-                                                 g
-                                                 gas
-                                                 fc
-                                                 cas
-                                                 nas
-                                                 eas
-    where
-      eas = const []
+graphvizClusters' :: (Ord c) => GraphData n e -> [GlobalAttributes]
+                     -> (LNode n -> NodeCluster c n)
+                     -> (c -> [GlobalAttributes]) -> (LNode n -> Attributes)
+                     -> (LEdge e -> Attributes) -> DotGraph Node
+graphvizClusters' = applyDirAlg clusterGraphToDot
 
 -- | A function to convert an 'LNode' to the required 'NodeCluster'
 --   for use with the 'Graphviz' library.

@@ -53,41 +53,42 @@ import Control.Arrow(second)
  -}
 
 -- | Represents information about the graph being analysed.
-data GraphData a = GraphData { -- | We use a graph type with no edge labels.
-                               graph :: AGr a,
-                               -- | The expected root nodes in the graph.
-                               wantedRootNodes :: NGroup,
-                               -- | Is the data this graph represents
-                               --   directed in nature?
-                               directedData :: Bool,
-                               -- | Unused relationships (i.e. not in
-                               --   the actual graph).  These are the
-                               --   edges containing nodes not in the
-                               --   graph.
-                               unusedRelationships :: [(a,a)]
-                             }
+data GraphData n e = GraphData { -- | We use a graph type with no edge labels.
+                                 graph :: AGr n e,
+                                 -- | The expected root nodes in the graph.
+                                 wantedRootNodes :: NGroup,
+                                 -- | Is the data this graph represents
+                                 --   directed in nature?
+                                 directedData :: Bool,
+                                 -- | Unused relationships (i.e. not in
+                                 --   the actual graph).  These are the
+                                 --   edges containing nodes not in the
+                                 --   graph.
+                                 unusedRelationships :: Set (Rel n e)
+                               }
 
 -- | The expected roots in the data to be analysed.
-wantedRoots   :: GraphData a -> LNGroup a
+wantedRoots   :: GraphData n e -> LNGroup n
 wantedRoots g = addLabels (graph g) (wantedRootNodes g)
 
 -- | Apply an algorithm to the data to be analysed.
-applyAlg   :: (AGr a -> b) -> GraphData a -> b
+applyAlg   :: (AGr n e -> a) -> GraphData n e -> a
 applyAlg f = f . graph
 
 -- | Apply an algorithm that requires knowledge about whether the
 --   graph is directed ('True') or undirected ('False') to the data to
 --   be analysed.
-applyDirAlg     :: (Bool -> AGr a -> b) -> GraphData a -> b
+applyDirAlg     :: (Bool -> AGr n e -> a) -> GraphData n e -> a
 applyDirAlg f g = f (directedData g) (graph g)
 
 -- | Apply a function to all the data points.
 --   This might be useful in circumstances where you want to reduce
 --   the data type used to a simpler one, etc.  The function is also
 --   applied to the datums in 'unusedRelationships'.
-mapAllNodes      :: (a -> b) -> GraphData a -> GraphData b
+mapAllNodes      :: (Ord a, Ord e, Ord b) => (a -> b)
+                    -> GraphData a e -> GraphData b e
 mapAllNodes f gd = gd { graph = nmap f $ graph gd
-                      , unusedRelationships = map (applyBoth f)
+                      , unusedRelationships = S.map (applyNodes f)
                                               $ unusedRelationships gd
                       }
 
@@ -97,10 +98,10 @@ mapAllNodes f gd = gd { graph = nmap f $ graph gd
 --   two-part constructor (e.g. 'Left' and 'Right' from 'Either') to
 --   the nodes such that the wanted and unwanted datums can be
 --   differentiated before calling 'mergeUnused'.
-mapNodeType          :: (Ord a) => (a -> b) -> (a -> b)
-                        -> GraphData a -> GraphData b
+mapNodeType          :: (Ord a, Ord b, Ord e) => (a -> b) -> (a -> b)
+                        -> GraphData a e -> GraphData b e
 mapNodeType fk fu gd = gd { graph = nmap fk $ graph gd
-                          , unusedRelationships = map (applyBoth f)
+                          , unusedRelationships = S.map (applyNodes f)
                                                   $ unusedRelationships gd
                           }
     where
@@ -111,17 +112,17 @@ mapNodeType fk fu gd = gd { graph = nmap fk $ graph gd
 
 -- | Merge the 'unusedRelationships' into the graph by adding the
 --   appropriate nodes.
-mergeUnused    :: (Ord a) => GraphData a -> GraphData a
+mergeUnused    :: (Ord n, Ord e) => GraphData n e -> GraphData n e
 mergeUnused gd = gd { graph = insEdges es' gr
-                    , unusedRelationships = []
+                    , unusedRelationships = S.empty
                     }
     where
       gr = graph gd
       unRs = unusedRelationships gd
-      mkS f = S.fromList $ map f unRs
+      mkS f = S.map f unRs
       unNs = S.toList
              . flip S.difference (knownNodes gd)
-             $ S.union (mkS fst) (mkS snd)
+             $ S.union (mkS fromNode) (mkS toNode)
       ns' = newNodes (length unNs) gr
       gr' = flip insNodes gr $ zip ns' unNs
       -- Should no longer contain any unused rels.
@@ -129,37 +130,37 @@ mergeUnused gd = gd { graph = insEdges es' gr
                            (labNodes gr)
                            unRs
 
-knownNodes :: (Ord a) => GraphData a -> Set a
+knownNodes :: (Ord n) => GraphData n e -> Set n
 knownNodes = S.fromList . map snd . labNodes . graph
 
 -- | Used to set @'unusedRelationships' = []@.  This is of use when
 --   they are unneeded or because there is no sensible mapping
 --   function to use when applying a mapping function to the nodes in
 --   the graph.
-removeUnused   :: GraphData a -> GraphData a
-removeUnused g = g { unusedRelationships = [] }
+removeUnused   :: GraphData n e -> GraphData n e
+removeUnused g = g { unusedRelationships = S.empty }
 
 -- | Replace the current graph by applying a function to it.  To
 --   ensure type safety, 'removeUnused' is applied.
-updateGraph     :: (AGr a -> AGr b)
-                   -> GraphData a -> GraphData b
+updateGraph     :: (AGr a b -> AGr c d)
+                   -> GraphData a b -> GraphData c d
 updateGraph f g = g { graph = applyAlg f g
-                    , unusedRelationships = []
+                    , unusedRelationships = S.empty
                     }
 
 -- | Replace the current graph by applying a function to it, where the
 --   function depends on whether the graph is directed ('True') or
 --   undirected ('False').  To ensure type safety, 'removeUnused' is
 --   applied.
-updateGraph'     :: (Bool -> AGr a -> AGr b)
-                    -> GraphData a -> GraphData b
+updateGraph'     :: (Bool -> AGr a b -> AGr c d)
+                    -> GraphData a b -> GraphData c d
 updateGraph' f g = g { graph = applyDirAlg f g
-                     , unusedRelationships = []
+                     , unusedRelationships = S.empty
                      }
 
 
 -- | An alias for the type of graph being used by default.
-type AGr a = Gr a ()
+type AGr n e = Gr n e
 
 -- | A grouping of 'Node's.
 type NGroup = [Node]

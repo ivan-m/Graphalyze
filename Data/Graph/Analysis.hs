@@ -23,7 +23,7 @@ module Data.Graph.Analysis
       module Data.Graph.Inductive.Graph,
       -- * Importing data
       ImportParams(..),
-      defaultParams,
+      Rel,
       importData,
       -- * Result analysis
       -- $analfuncts
@@ -61,25 +61,17 @@ version = "0.5"
    to analyse.  If the graph is undirected, it is better to list each
    edge once rather than both directions.
  -}
-data ImportParams a = Params { -- | The discrete points.
-                               dataPoints :: [a],
-                               -- | The relationships between the points.
-                               relationships :: [(a,a)],
-                               -- | The expected roots of the graph.
-                               --   If @'directed' = 'False'@, then this is ignored.
-                               roots :: [a],
-                               -- | 'False' if relationships are symmetric
-                               --   (i.e. an undirected graph).
-                               directed :: Bool
-                             }
-
--- | Default values for 'ImportParams', with no roots and a directed graph.
-defaultParams :: ImportParams a
-defaultParams = Params { dataPoints    = [],
-                         relationships = [],
-                         roots         = [],
-                         directed      = True
-                       }
+data ImportParams n e = Params { -- | The discrete points.
+                                 dataPoints :: [n],
+                                 -- | The relationships between the points.
+                                 relationships :: [Rel n e],
+                                 -- | The expected roots of the graph.
+                                 --   If @'directed' = 'False'@, then this is ignored.
+                                 roots :: [n],
+                                 -- | 'False' if relationships are symmetric
+                                 --   (i.e. an undirected graph).
+                                 directed :: Bool
+                               }
 
 {- |
    Import data into a format suitable for analysis.  This function is
@@ -90,7 +82,7 @@ defaultParams = Params { dataPoints    = [],
    'unusedRelationships'.  Note that it is assumed that all datums in
    'roots' are also contained within 'dataPoints'.
  -}
-importData        :: (Ord a) => ImportParams a -> GraphData a
+importData        :: (Ord n, Ord e) => ImportParams n e -> GraphData n e
 importData params = GraphData { graph = dGraph
                               , wantedRootNodes = rootNodes
                               , directedData = isDir
@@ -101,14 +93,14 @@ importData params = GraphData { graph = dGraph
       -- Adding Node values to each of the data points.
       lNodes = zip [1..] (dataPoints params)
       -- The valid edges in the graph along with the unused relationships.
-      (unRs, graphEdges) = relsToEs isDir lNodes (relationships params)
+      (unRs, graphEdges) = relsToEs isDir lNodes (S.fromList $ relationships params)
       -- Creating a lookup map from the label to the @Node@ value.
       nodeMap = mkNodeMap lNodes
       -- Validate a node
-      validNode l = liftM (flip (,) l) $ M.lookup l nodeMap
+      validNode l = M.lookup l nodeMap
       -- Construct the root nodes
       rootNodes = if isDir
-                  then map fst $ mapMaybe validNode (roots params)
+                  then mapMaybe validNode (roots params)
                   else []
       -- Construct the graph.
       dGraph = mkGraph lNodes graphEdges
@@ -143,7 +135,7 @@ lengthAnalysis as = (av,stdDev,as'')
    * Unexpected roots (i.e. those roots that aren't present in
      'wantedRoots').
  -}
-classifyRoots    :: (Ord a) => GraphData a -> ([LNode a], [LNode a], [LNode a])
+classifyRoots    :: (Ord n) => GraphData n e -> ([LNode n], [LNode n], [LNode n])
 classifyRoots gd = (areWanted, notRoots, notWanted)
     where
       wntd = S.fromList $ wantedRoots gd
@@ -154,7 +146,7 @@ classifyRoots gd = (areWanted, notRoots, notWanted)
 
 -- | Only return those chains (see 'chainsIn') where the non-initial
 --   nodes are /not/ expected roots.
-interiorChains    :: (Eq a) => GraphData a -> [LNGroup a]
+interiorChains    :: (Eq n, Eq e) => GraphData n e -> [LNGroup n]
 interiorChains gd = filter (not . interiorRoot) chains
     where
       chains = applyAlg chainsIn gd
