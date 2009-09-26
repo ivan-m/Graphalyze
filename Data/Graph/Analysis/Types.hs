@@ -1,5 +1,6 @@
-{-# LANGUAGE MultiParamTypeClasses
-            , FunctionalDependencies
+{-# LANGUAGE TypeFamilies
+            , FlexibleContexts
+            , TypeSynonymInstances
  #-}
 
 {- |
@@ -13,13 +14,13 @@
    by the Graphalyze library.
  -}
 module Data.Graph.Analysis.Types
-    ( -- * Graph specialization
+    ( -- * Graph specialization.
       GraphData(..),
       Gr,
       AGr,
       NGroup,
       LNGroup,
-      -- * Functions on 'GraphData'
+      -- * Functions on @GraphData@.
       wantedRoots,
       applyAlg,
       applyDirAlg,
@@ -29,8 +30,11 @@ module Data.Graph.Analysis.Types
       updateGraph',
       mapAllNodes,
       mapNodeType,
-      -- * Graph Label classes
+      -- * Clustering graphs based on their node labels.
       ClusterLabel(..),
+      ClusterType(..),
+      GraphID(..),
+      -- * Graph label types.
       GenCluster(..),
       PosLabel(..)
     ) where
@@ -39,6 +43,8 @@ import Data.Graph.Analysis.Internal
 
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.PatriciaTree
+
+import Data.GraphViz.Types(GraphID(..))
 
 import qualified Data.Set as S
 import Data.Set(Set)
@@ -172,16 +178,32 @@ type LNGroup a = [LNode a]
 
 -- | These types and classes represent useful label types.
 
--- | The class of outputs of a clustering algorithm.
---   This class is mainly used for visualization purposes,
---   with the 'Ord' instance required for grouping.
---   Instances of this class are intended for use as
---   the label type of graphs.
-class (Ord c) => ClusterLabel a c | a -> c where
+-- | The class of outputs of a clustering algorithm.  This class is
+--   mainly used for visualization purposes, with the 'Ord' instance
+--   required for grouping.  Instances of this class are intended for
+--   use as the label type of graphs.
+class (ClusterType (Cluster cl)) => ClusterLabel cl where
+    type Cluster cl
+    type Label cl
+
     -- | The cluster the node label belongs in.
-    cluster   :: a -> c
-    -- | The printed form of the actual label.
-    nodelabel :: a -> String
+    cluster   :: cl -> Cluster cl
+
+    -- | The actual label.
+    nodelabel :: cl -> Label cl
+
+-- | A class used to define which types are valid for clusters.
+class (Ord c) => ClusterType c where
+    -- | Create a label for visualisation purposes with the GraphViz
+    --   library.  Default is @'const' 'Nothing'@.
+    clusterID :: c -> Maybe GraphID
+    clusterID = const Nothing
+
+instance ClusterType Int where
+    clusterID = Just . Int
+
+instance ClusterType String where
+    clusterID = Just . Str
 
 -- | A generic cluster-label type.
 data GenCluster a = GC { clust :: Int
@@ -189,13 +211,16 @@ data GenCluster a = GC { clust :: Int
                        }
                     deriving (Eq,Show)
 
-instance (Show a) => ClusterLabel (GenCluster a) Int where
-    cluster (GC c _) = c
-    nodelabel (GC _ l) = show l
+instance ClusterLabel (GenCluster a) where
+    type Cluster (GenCluster a) = Int
+    type Label (GenCluster a) = a
 
--- | Label type for storing node positions.  Note that this isn't an instance of
---   'ClusterLabel' since there's no clear indication on which cluster a node
---   belongs to at this stage.
+    cluster = clust
+    nodelabel = nLbl
+
+-- | Label type for storing node positions.  Note that this isn't an
+--   instance of 'ClusterLabel' since there's no clear indication on
+--   which cluster a node belongs to at this stage.
 data PosLabel a = PLabel { xPos   :: Int
                          , yPos   :: Int
                          , pnode  :: Node

@@ -51,22 +51,24 @@ graphviz = applyDirAlg graphToDot
 -- | Convert the clustered 'GraphData' into 'DotGraph' format with the
 --   given 'Attribute's.  Cluster the nodes based upon their
 --   'ClusterLabel' clusters.
-graphvizClusters :: (ClusterLabel n c) => GraphData n e -> [GlobalAttributes]
-                    -> (c -> [GlobalAttributes]) -> (LNode n -> Attributes)
+graphvizClusters :: (ClusterLabel cl) => GraphData cl e -> [GlobalAttributes]
+                    -> (Cluster cl -> [GlobalAttributes])
+                    -> (LNode cl -> Attributes)
                     -> (LEdge e -> Attributes) -> DotGraph Node
-graphvizClusters g gas = graphvizClusters' g gas assignCluster
+graphvizClusters g gas = graphvizClusters' g gas assignCluster clusterID
 
 -- | Convert the 'GraphData' into a clustered 'DotGraph' format using
 --   the given clustering function and with the given 'Attribute's.
 graphvizClusters' :: (Ord c) => GraphData n e -> [GlobalAttributes]
                      -> (LNode n -> NodeCluster c n)
+                     -> (c -> Maybe GraphID)
                      -> (c -> [GlobalAttributes]) -> (LNode n -> Attributes)
                      -> (LEdge e -> Attributes) -> DotGraph Node
 graphvizClusters' = applyDirAlg clusterGraphToDot
 
 -- | A function to convert an 'LNode' to the required 'NodeCluster'
 --   for use with the GraphViz library.
-assignCluster          :: (ClusterLabel a c) => LNode a -> NodeCluster c a
+assignCluster          :: (ClusterLabel cl) => LNode cl -> NodeCluster (Cluster cl) cl
 assignCluster nl@(_,a) = C (cluster a) (N nl)
 
 -- | Used to state that GraphViz should use the default 'Attribute's
