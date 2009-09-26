@@ -74,14 +74,14 @@ import Data.GraphViz( dotizeGraph
                     , Pos(..)
                     , Point(..))
 
-import Data.List
-import Data.Maybe
-import Data.Function
+import Data.List(nub, nubBy, (\\), find, sortBy, groupBy, unfoldr, intersperse)
+import Data.Maybe(fromJust)
+import Data.Function(on)
 import qualified Data.Set as Set
 import qualified Data.IntMap as IMap
 import Data.IntMap(IntMap)
-import Control.Arrow
-import System.Random
+import Control.Arrow(first, second)
+import System.Random(RandomGen, randomR)
 
 -- -----------------------------------------------------------------------------
 

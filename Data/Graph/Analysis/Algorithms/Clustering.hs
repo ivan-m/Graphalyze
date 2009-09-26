@@ -32,13 +32,12 @@ import Data.Graph.Analysis.Algorithms.Common
 
 import Data.Graph.Inductive.Graph
 
-import Data.List
-import Data.Maybe
-import Data.Function
+import Data.List(foldl', tails, delete, intersect)
+import Data.Function(on)
 import qualified Data.Set.BKTree as BK
 import Data.Set.BKTree(BKTree, Metric(..))
-import Control.Arrow
-import System.Random
+import Control.Arrow(first, second)
+import System.Random(RandomGen, randomR)
 
 -- -----------------------------------------------------------------------------
 

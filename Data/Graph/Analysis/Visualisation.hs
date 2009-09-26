@@ -22,8 +22,6 @@ module Data.Graph.Analysis.Visualisation
       showNodes
     ) where
 
-import Prelude
-
 import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 import Data.Graph.Inductive.Graph

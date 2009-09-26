@@ -29,12 +29,13 @@ module Data.Graph.Analysis.Reporting.Pandoc
 import Data.Graph.Analysis.Reporting
 import Data.GraphViz.Attributes(Attribute)
 
-import Data.List
-import Data.Maybe
 import Text.Pandoc
-import Control.Exception.Extensible
-import System.Directory
-import System.FilePath
+
+import Data.List(intersperse)
+import Data.Maybe(isNothing, fromJust)
+import Control.Exception.Extensible(SomeException, try)
+import System.Directory(removeDirectoryRecursive)
+import System.FilePath((</>), (<.>))
 
 -- -----------------------------------------------------------------------------
 

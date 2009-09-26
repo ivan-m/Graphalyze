@@ -28,12 +28,12 @@ module Data.Graph.Analysis.Reporting
 import Data.Graph.Inductive(Node)
 import Data.GraphViz
 
-import Data.Maybe
-import Data.Time
-import Control.Exception.Extensible
-import System.Directory
-import System.FilePath
-import System.Locale
+import Data.Maybe(isJust, fromJust)
+import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
+import Control.Exception.Extensible(SomeException(..), tryJust)
+import System.Directory(createDirectoryIfMissing)
+import System.FilePath((</>), (<.>))
+import System.Locale(defaultTimeLocale)
 
 -- -----------------------------------------------------------------------------
 

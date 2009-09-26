@@ -35,11 +35,12 @@ import Data.Graph.Analysis.Types
 import Data.Graph.Analysis.Utils
 
 import Data.Graph.Inductive.Graph
+
 -- For linking purposes.  This will throw a warning.
 import Data.Graph.Inductive.Query.DFS(components)
-import Data.List
-import Data.Maybe
-import Control.Arrow
+import Data.List(unfoldr, foldl', foldl1', intersect, (\\), delete, tails, nub)
+import Data.Maybe(isJust)
+import Control.Arrow(first)
 
 -- -----------------------------------------------------------------------------
 
