@@ -206,9 +206,9 @@ instance (Eq a) => Metric (PosLabel a) where
 
 -- | The Euclidian distance function.
 euclidian       :: PosLabel a -> PosLabel a -> Double
-euclidian n1 n2 = sqrt . fI $ (posBy xPos) + (posBy yPos)
+euclidian n1 n2 = sqrt . fI $ posBy xPos + posBy yPos
     where
-      posBy p = sq $ (p n1) - (p n2)
+      posBy p = sq $ p n1 - p n2
 
 -- | Converts the positional labels into an RNG.
 makeRNG    :: (Eq a, Graph gr) => [PosLabel a] -> gr () Int
@@ -259,7 +259,7 @@ nbrCluster g
       (_,dfMin,dfMax) = sortMinMax $ map sub es'
       -- We are going to do >= tests on t, but using Int values, so
       -- take the ceiling.
-      t = ceiling $ (((fI dfMin) + (fI dfMax))/2 :: Double)
+      t = ceiling ((fI dfMin + fI dfMax)/2 :: Double)
       -- Edges that meet the threshold criteria.
       thrs = filter (\ejs@(ej,_) -> (ej >= 2*eMin) && (sub ejs >= t)) es'
       -- Take the first edges that meets the threshold criteria.
@@ -307,7 +307,7 @@ collapseGraph g = foldl' (flip collapseAllBy) cg interestingParts
 trivialCollapse    :: (Graph gr) => gr (CNodes a) b -> Bool
 trivialCollapse cg = allCollapsed || notCollapsed
     where
-      allCollapsed = (single lns) || (null lns)
+      allCollapsed = single lns || null lns
       notCollapsed = all (single . cNodes) lns
       lns = labels cg
 
@@ -318,7 +318,7 @@ makeCollapsible = nlmap (CN . return)
 -- | Collapse the two given nodes into one node.
 collapse         :: (DynGraph gr) => gr (CNodes a) b -> Node -> Node
                  -> gr (CNodes a) b
-collapse g n1 n2 = if (n1 == n2)
+collapse g n1 n2 = if n1 == n2
                    then g
                    else c' & g''
     where

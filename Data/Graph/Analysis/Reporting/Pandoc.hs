@@ -136,7 +136,7 @@ createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
 createPandoc p d = do created <- tryCreateDirectory dir
                       -- If the first one fails, so will this one.
                       tryCreateDirectory $ dir </> gdir
-                      if (not created)
+                      if not created
                          then failDoc
                          else do elems <- multiElems pp (content d)
                                  case elems of
@@ -163,8 +163,8 @@ createPandoc p d = do created <- tryCreateDirectory dir
                           , eGSize = fmap createSize' (extGraphSize p)
                           }
       opts = writerOptions { writerHeader = (header p) }
-      convert = (writer p) opts
-      file = dir </> (fileFront d) <.> (extension p)
+      convert = writer p opts
+      file = dir </> fileFront d <.> extension p
       tryWrite :: String -> IO (Either SomeException ())
       tryWrite = try . writeFile file
       success = return (Just file)
@@ -177,8 +177,8 @@ createPandoc p d = do created <- tryCreateDirectory dir
  -}
 
 -- | The meta information
-makeMeta       :: DocInline -> String -> String -> Meta
-makeMeta t a d = Meta (inlines t) [a] d
+makeMeta     :: DocInline -> String -> String -> Meta
+makeMeta t a = Meta (inlines t) [a]
 
 -- | Html output doesn't show the author and date; use this to print it.
 htmlInfo         :: String -> String -> Block
@@ -248,13 +248,13 @@ elements p (GraphImage dg)     = do el <- createGraph (filedir p)
 -- | Concatenate the result of multiple calls to 'elements'.
 multiElems         :: PandocProcess -> [DocElement] -> IO (Maybe [Block])
 multiElems p elems = do elems' <- mapM (elements p) elems
-                        if (any isNothing elems')
+                        if any isNothing elems'
                            then return Nothing
                            else return (Just $ concatMap fromJust elems')
 
 -- | As for 'multiElems', but don't @concat@ the resulting 'Block's.
 multiElems'         :: PandocProcess -> [DocElement] -> IO (Maybe [[Block]])
 multiElems' p elems = do elems' <- mapM (elements p) elems
-                         if (any isNothing elems')
+                         if any isNothing elems'
                             then return Nothing
                             else return (Just $ map fromJust elems')

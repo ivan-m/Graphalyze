@@ -163,7 +163,7 @@ regularOf gr n = map (n:) (alsoRegular gr crs)
 alsoRegular          :: (Graph g) => g a b -> [Node] -> [[Node]]
 alsoRegular _ []     = []
 alsoRegular _ [n]    = [[n]]
-alsoRegular g (n:ns) = [n] : rs ++ (alsoRegular g ns)
+alsoRegular g (n:ns) = [n] : rs ++ alsoRegular g ns
     where
       rs = map (n:) (alsoRegular g $ intersect crn ns)
       crn = twoCycle g n
@@ -180,7 +180,7 @@ isRegular g ns = all allTwoCycle split
       -- Node + Rest of list
       split = zip ns tns'
       tns' = tail $ tails ns
-      allTwoCycle (n,rs) = null $ rs \\ (twoCycle g n)
+      allTwoCycle (n,rs) = null $ rs \\ twoCycle g n
 
 -- -----------------------------------------------------------------------------
 {- $cycles
@@ -219,7 +219,7 @@ cyclesFor = map init .
             pathTree .
             first Just
     where
-      isCycle p = (not $ single p) && ((head p) == (last p))
+      isCycle p = not (single p) && (head p == last p)
 
 -- -----------------------------------------------------------------------------
 
@@ -250,7 +250,7 @@ chainsIn' g = filter (not . single) -- Remove trivial chains
 
 -- | Find the chain starting with the given 'Node'.
 getChain     :: (Graph g) => g a b -> Node -> NGroup
-getChain g n = n : (unfoldr (chainLink g) (chainNext g n))
+getChain g n = n : unfoldr (chainLink g) (chainNext g n)
 
 -- | Find the next link in the chain.
 chainLink :: (Graph g) => g a b -> Maybe Node
@@ -263,7 +263,7 @@ chainLink g (Just n)
 
 -- | Determines if the given node is the start of a chain.
 isChainStart     :: (Graph g) => g a b -> Node -> Bool
-isChainStart g n = (hasNext g n)
+isChainStart g n = hasNext g n
                    && case (pre g n \\ [n]) of
                         [n'] -> not $ isChainStart g n'
                         _    -> True
@@ -272,7 +272,7 @@ isChainStart g n = (hasNext g n)
 --   direction, and if so what the next node in that direction is.
 chainFind         :: (Graph g) => (g a b -> Node -> NGroup)
                   -> g a b -> Node -> Maybe Node
-chainFind f g n = case ((nub $ f g n) \\ [n]) of
+chainFind f g n = case (nub (f g n) \\ [n]) of
                     [n'] -> Just n'
                     _    -> Nothing
 

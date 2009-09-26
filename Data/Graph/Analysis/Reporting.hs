@@ -140,10 +140,10 @@ createGraph :: FilePath -> FilePath -> [Attribute] -> Maybe [Attribute]
             -> DocGraph -> IO (Maybe DocElement)
 createGraph fp gfp as mas (fn,inl,ag)
     = do eImg <- gI as DocImage fn inl Nothing
-         if (isJust eImg)
+         if isJust eImg
             then case mas of
                    Nothing    -> rt eImg
-                   (Just as') -> do rt =<< gI as' DocLink fn' (toImg eImg) eImg
+                   (Just as') -> rt =<< gI as' DocLink fn' (toImg eImg) eImg
             else return Nothing
     where
       fn' = fn ++ "-large"
