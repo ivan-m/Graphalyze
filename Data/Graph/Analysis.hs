@@ -94,7 +94,7 @@ importData params = GraphData { graph = dGraph
       -- Adding Node values to each of the data points.
       lNodes = zip [1..] (dataPoints params)
       -- The valid edges in the graph along with the unused relationships.
-      (unRs, graphEdges) = relsToEs isDir lNodes (S.fromList $ relationships params)
+      (unRs, graphEdges) = relsToEs isDir lNodes (relationships params)
       -- Creating a lookup map from the label to the @Node@ value.
       nodeMap = mkNodeMap lNodes
       -- Validate a node

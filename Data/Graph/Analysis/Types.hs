@@ -70,7 +70,7 @@ data GraphData n e = GraphData { -- | We use a graph type with no edge labels.
                                  --   the actual graph).  These are the
                                  --   edges containing nodes not in the
                                  --   graph.
-                                 unusedRelationships :: Set (Rel n e)
+                                 unusedRelationships :: [Rel n e]
                                }
 
 -- | The expected roots in the data to be analysed.
@@ -94,7 +94,7 @@ applyDirAlg f g = f (directedData g) (graph g)
 mapAllNodes      :: (Ord a, Ord e, Ord b) => (a -> b)
                     -> GraphData a e -> GraphData b e
 mapAllNodes f gd = gd { graph = nmap f $ graph gd
-                      , unusedRelationships = S.map (applyNodes f)
+                      , unusedRelationships = map (applyNodes f)
                                               $ unusedRelationships gd
                       }
 
@@ -107,7 +107,7 @@ mapAllNodes f gd = gd { graph = nmap f $ graph gd
 mapNodeType          :: (Ord a, Ord b, Ord e) => (a -> b) -> (a -> b)
                         -> GraphData a e -> GraphData b e
 mapNodeType fk fu gd = gd { graph = nmap fk $ graph gd
-                          , unusedRelationships = S.map (applyNodes f)
+                          , unusedRelationships = map (applyNodes f)
                                                   $ unusedRelationships gd
                           }
     where
@@ -120,12 +120,12 @@ mapNodeType fk fu gd = gd { graph = nmap fk $ graph gd
 --   appropriate nodes.
 mergeUnused    :: (Ord n, Ord e) => GraphData n e -> GraphData n e
 mergeUnused gd = gd { graph = insEdges es' gr
-                    , unusedRelationships = S.empty
+                    , unusedRelationships = []
                     }
     where
       gr = graph gd
       unRs = unusedRelationships gd
-      mkS f = S.map f unRs
+      mkS f = S.fromList $ map f unRs
       unNs = S.toList
              . flip S.difference (knownNodes gd)
              $ S.union (mkS fromNode) (mkS toNode)
@@ -144,14 +144,14 @@ knownNodes = S.fromList . map snd . labNodes . graph
 --   function to use when applying a mapping function to the nodes in
 --   the graph.
 removeUnused   :: GraphData n e -> GraphData n e
-removeUnused g = g { unusedRelationships = S.empty }
+removeUnused g = g { unusedRelationships = [] }
 
 -- | Replace the current graph by applying a function to it.  To
 --   ensure type safety, 'removeUnused' is applied.
 updateGraph     :: (AGr a b -> AGr c d)
                    -> GraphData a b -> GraphData c d
 updateGraph f g = g { graph = applyAlg f g
-                    , unusedRelationships = S.empty
+                    , unusedRelationships = []
                     }
 
 -- | Replace the current graph by applying a function to it, where the
@@ -161,7 +161,7 @@ updateGraph f g = g { graph = applyAlg f g
 updateGraph'     :: (Bool -> AGr a b -> AGr c d)
                     -> GraphData a b -> GraphData c d
 updateGraph' f g = g { graph = applyDirAlg f g
-                     , unusedRelationships = S.empty
+                     , unusedRelationships = []
                      }
 
 

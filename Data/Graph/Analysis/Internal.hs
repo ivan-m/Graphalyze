@@ -62,10 +62,9 @@ relLabel           :: Rel n e -> e
 relLabel (_, _, e) = e
 
 
-relsToEs              :: (Ord a, Ord e) => Bool -> [LNode a]
-                         -> Set (Rel a e)
-                         -> (Set (Rel a e), [LEdge e])
-relsToEs isDir lns rs = (S.fromList unRs, graphEdges)
+relsToEs              :: (Ord a) => Bool -> [LNode a] -> [Rel a e]
+                         -> ([Rel a e], [LEdge e])
+relsToEs isDir lns rs = (unRs, graphEdges)
     where
       -- Creating a lookup map from the label to the @Node@ value.
       nodeMap = mkNodeMap lns
@@ -75,9 +74,7 @@ relsToEs isDir lns rs = (S.fromList unRs, graphEdges)
                       (Just x, Just y, l) -> Right (x,y,l)
                       _                   -> Left e
       -- The valid edges in the graph.
-      (unRs, gEdges) = partitionEithers
-                       . S.toList
-                       $ S.map validEdge rs
+      (unRs, gEdges) = partitionEithers $ map validEdge rs
       dupSwap' = if isDir
                  then id
                  else concatMap dupSwap
