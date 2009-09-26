@@ -32,8 +32,7 @@ import Data.GraphViz.Attributes(Attribute)
 import Data.List
 import Data.Maybe
 import Text.Pandoc
-import Control.Monad
-import Control.Exception
+import Control.Exception.Extensible
 import System.Directory
 import System.FilePath
 

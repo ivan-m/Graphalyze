@@ -42,14 +42,9 @@ import Data.Graph.Analysis.Reporting
 
 import Data.Graph.Inductive.Graph
 
-import Data.Either(partitionEithers)
 import Data.Maybe(mapMaybe)
 import qualified Data.Map as M
-import Data.Map(Map)
 import qualified Data.Set as S
-import Data.Set(Set)
-import Control.Arrow(second)
-import Control.Monad(liftM)
 
 import Data.Version(showVersion)
 import qualified Paths_Graphalyze as Paths(version)

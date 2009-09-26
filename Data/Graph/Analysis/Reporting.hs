@@ -27,7 +27,6 @@ module Data.Graph.Analysis.Reporting
 
 import Data.Graph.Inductive(Node)
 import Data.GraphViz
-import Data.Graph.Analysis.Visualisation
 
 import Data.Maybe
 import Data.Time

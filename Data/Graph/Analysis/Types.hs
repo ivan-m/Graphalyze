@@ -48,7 +48,6 @@ import Data.GraphViz.Types(GraphID(..))
 
 import qualified Data.Set as S
 import Data.Set(Set)
-import Control.Arrow(second)
 
 -- -----------------------------------------------------------------------------
 
@@ -119,7 +118,7 @@ mapNodeType fk fu gd = gd { graph = nmap fk $ graph gd
 -- | Merge the 'unusedRelationships' into the graph by adding the
 --   appropriate nodes.
 mergeUnused    :: (Ord n, Ord e) => GraphData n e -> GraphData n e
-mergeUnused gd = gd { graph = insEdges es' gr
+mergeUnused gd = gd { graph = insEdges es' gr'
                     , unusedRelationships = []
                     }
     where

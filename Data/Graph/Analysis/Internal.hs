@@ -17,8 +17,6 @@ import Data.Graph.Inductive.Graph
 import Data.Either(partitionEithers)
 import qualified Data.Map as M
 import Data.Map(Map)
-import qualified Data.Set as S
-import Data.Set(Set)
 import Data.Maybe(fromJust)
 import Control.Arrow((***))
 import Control.Monad(ap)

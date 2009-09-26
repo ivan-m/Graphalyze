@@ -29,10 +29,6 @@ import Data.Graph.Analysis.Utils
 import Data.Graph.Inductive.Graph
 import Data.GraphViz
 
-import System.IO
-import Control.Concurrent
-import Control.Exception
-
 -- -----------------------------------------------------------------------------
 
 {- $graphviz

@@ -80,7 +80,6 @@ import Data.Function
 import qualified Data.Set as Set
 import qualified Data.IntMap as IMap
 import Data.IntMap(IntMap)
-import Control.Monad
 import Control.Arrow
 import System.Random
 
