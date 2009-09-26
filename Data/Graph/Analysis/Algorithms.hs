@@ -16,6 +16,9 @@ module Data.Graph.Analysis.Algorithms
       module Data.Graph.Analysis.Algorithms.Clustering
     ) where
 
+-- For haddock purposes.
+import Data.Graph.Inductive.Graph(Node)
+
 import Data.Graph.Analysis.Algorithms.Common
 import Data.Graph.Analysis.Algorithms.Directed
 import Data.Graph.Analysis.Algorithms.Clustering
@@ -24,5 +27,5 @@ import Data.Graph.Analysis.Algorithms.Clustering
    For algorithms that return a group of nodes, there are typically
    two different forms: the standard form (e.g. 'cliquesIn') will
    return a list of @LNode@s, whilst the primed version
-   (e.g. `cliquesIn'') will return a list of @Node@s.
+   (e.g. `cliquesIn'') will return a list of 'Node's.
  -}

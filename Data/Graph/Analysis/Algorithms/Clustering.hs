@@ -192,7 +192,7 @@ relativeNeighbourhood dir g = setCluster cMap g
       cMap = createLookup $ rn g
       rn g' = nbrCluster rng
           where
-            rng :: Gr () Int
+            rng :: AGr () Int
             rng = makeRNG $ getPositions dir g'
 
 -- | We take the ceiling of the Euclidian distance function to use as our

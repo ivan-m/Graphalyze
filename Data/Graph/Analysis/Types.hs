@@ -16,7 +16,6 @@
 module Data.Graph.Analysis.Types
     ( -- * Graph specialization.
       GraphData(..),
-      Gr,
       AGr,
       NGroup,
       LNGroup,
@@ -50,12 +49,6 @@ import qualified Data.Set as S
 import Data.Set(Set)
 
 -- -----------------------------------------------------------------------------
-
-{- |
-   By default, the Graphalyze library works on graphs with no edge labels.
-   As such, these types provide useful aliases for the default FGL types.
-   Most of the algorithms, however, work on arbitrary graph types.
- -}
 
 -- | Represents information about the graph being analysed.
 data GraphData n e = GraphData { -- | We use a graph type with no edge labels.

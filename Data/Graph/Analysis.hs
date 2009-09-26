@@ -10,8 +10,8 @@
    data as a graph.
 
    The original version of this library was written as part of my
-   mathematics honours thesis, /Graph-Theoretic Analysis of the
-   Relationships in Discrete Data/.
+   mathematics honours thesis,
+   /Graph-Theoretic Analysis of the Relationships in Discrete Data/.
  -}
 module Data.Graph.Analysis
     ( version,
