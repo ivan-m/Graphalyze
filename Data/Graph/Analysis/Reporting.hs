@@ -96,10 +96,10 @@ data DocInline = Text String
                | DocLink DocInline Location
                | DocImage DocInline Location
 
--- | Let the 'DocumentGenerator' instance apply extra settings, such as size.
-type AttrsToGraph = [Attribute] -> DotGraph Node
-
-type DocGraph = (FilePath,DocInline,AttrsToGraph)
+-- | Specify the 'DotGraph' to turn into an image, its filename (sans
+--   extension) and its caption.  The 'DotGraph' should not have a
+--   'Size' set.
+type DocGraph = (FilePath, DocInline, DotGraph Node)
 
 -- -----------------------------------------------------------------------------
 
@@ -135,14 +135,14 @@ tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
 --   If the second set of attributes is not 'Nothing', then the first
 --   image links to the second.  The whole result is wrapped in a
 --   'Paragraph'.
-createGraph :: FilePath -> FilePath -> [Attribute] -> Maybe [Attribute]
+createGraph :: FilePath -> FilePath -> Point -> Maybe Point
             -> DocGraph -> IO (Maybe DocElement)
-createGraph fp gfp as mas (fn,inl,ag)
-    = do eImg <- gI as DocImage fn inl Nothing
+createGraph fp gfp p mp (fn,inl,ag)
+    = do eImg <- gI p DocImage fn inl Nothing
          if isJust eImg
-            then case mas of
+            then case mp of
                    Nothing    -> rt eImg
-                   (Just as') -> rt =<< gI as' DocLink fn' (toImg eImg) eImg
+                   (Just p') -> rt =<< gI p' DocLink fn' (toImg eImg) eImg
             else return Nothing
     where
       fn' = fn ++ "-large"
@@ -155,16 +155,16 @@ createGraph fp gfp as mas (fn,inl,ag)
                               (Just img) -> return $ i2e img
 
 -- | Create the inline image/link from the given DocGraph.
-graphImage :: FilePath -> FilePath -> [Attribute]
+graphImage :: FilePath -> FilePath -> Point
            -> (DocInline -> Location -> DocInline)
            -> DocGraph -> IO (Maybe DocInline)
-graphImage fp gfp as link (fn,inl,ag)
-    = do created <- runGraphviz dg output filename'
+graphImage fp gfp s link (fn,inl,dg)
+    = do created <- runGraphviz dg' output filename'
          if created
             then return (Just img)
             else return Nothing
     where
-      dg = ag as
+      dg' = setSize s dg
       fn' = unDotPath fn
       ext = "png"
       output = Png
@@ -173,10 +173,19 @@ graphImage fp gfp as link (fn,inl,ag)
       loc = File filename
       img = link inl loc
 
--- | Create the "Data.GraphViz" 'Size' 'Attribute' using the given width
---   and a 6:4 width:height ratio.
-createSize   :: Double -> Attribute
-createSize w = Size $ PointD w (w*4/6)
+-- | Add a 'GlobalAttribute' to the 'DotGraph' specifying the given size.
+setSize     :: Point -> DotGraph a -> DotGraph a
+setSize p g = g { graphStatements = stmts' }
+    where
+      stmts = graphStatements g
+      stmts' = stmts { attrStmts = a : (attrStmts stmts) }
+      a = GraphAttrs [s]
+      s = Size p
+
+-- | Using a 6:4 ratio, create the given 'Point' representing
+--   width,height from the width.
+createSize   :: Double -> Point
+createSize w = PointD w (w*4/6)
 
 -- | Replace all @.@ with @-@ in the given 'FilePath', since some output
 --   formats (e.g. LaTeX) don't like extraneous @.@'s in the filename.

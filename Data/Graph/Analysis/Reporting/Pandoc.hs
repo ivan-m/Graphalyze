@@ -27,7 +27,7 @@ module Data.Graph.Analysis.Reporting.Pandoc
 -- TODO : the ability to create multiple files.
 
 import Data.Graph.Analysis.Reporting
-import Data.GraphViz.Attributes(Attribute)
+import Data.GraphViz.Attributes(Point)
 
 import Text.Pandoc
 
@@ -118,8 +118,8 @@ writerOptions = defaultWriterOptions { writerStandalone = True
 data PandocProcess = PP { secLevel :: Int
                         , filedir  :: FilePath
                         , graphdir :: FilePath
-                        , grSize   :: [Attribute]
-                        , eGSize   :: Maybe [Attribute]
+                        , grSize   :: Point
+                        , eGSize   :: Maybe Point
                         }
 
 -- | Start with a level 1 heading.
@@ -156,11 +156,10 @@ createPandoc p d = do created <- tryCreateDirectory dir
       meta = makeMeta (title d) auth dt
       -- Html output doesn't show date and auth anywhere by default.
       htmlAuthDt = htmlInfo auth dt
-      createSize' = return . createSize
       pp = defaultProcess { filedir = dir
                           , graphdir = gdir
-                          , grSize = createSize' (graphSize p)
-                          , eGSize = fmap createSize' (extGraphSize p)
+                          , grSize = createSize $ graphSize p
+                          , eGSize = fmap createSize $ extGraphSize p
                           }
       opts = writerOptions { writerHeader = (header p) }
       convert = writer p opts
