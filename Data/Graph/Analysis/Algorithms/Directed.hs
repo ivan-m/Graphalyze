@@ -1,11 +1,11 @@
 {- |
    Module      : Data.Graph.Analysis.Algorithms.Directed
    Description : Algorithms for directed graphs.
-   Copyright   : (c) Ivan Lazar Miljenovic 2008
+   Copyright   : (c) Ivan Lazar Miljenovic 2009
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 
-   Defines algorithms that work on both directed graphs.
+   Defines algorithms that work on directed graphs.
  -}
 module Data.Graph.Analysis.Algorithms.Directed
     ( -- * Ending nodes

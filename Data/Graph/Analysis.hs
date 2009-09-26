@@ -1,7 +1,7 @@
 {- |
    Module      : Data.Graph.Analysis
    Description : A Graph-Theoretic Analysis Library.
-   Copyright   : (c) Ivan Lazar Miljenovic 2008
+   Copyright   : (c) Ivan Lazar Miljenovic 2009
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 
@@ -9,8 +9,9 @@
    provide a way of analysing the relationships inherent in discrete
    data as a graph.
 
-   This was written as part of my mathematics honours thesis,
-   /Graph-Theoretic Analysis of the Relationships in Discrete Data/.
+   The original version of this library was written as part of my
+   mathematics honours thesis, /Graph-Theoretic Analysis of the
+   Relationships in Discrete Data/.
  -}
 module Data.Graph.Analysis
     ( version,

@@ -6,7 +6,7 @@
 {- |
    Module      : Data.Graph.Analysis.Types
    Description : Graphalyze Types and Classes
-   Copyright   : (c) Ivan Lazar Miljenovic 2008
+   Copyright   : (c) Ivan Lazar Miljenovic 2009
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 

@@ -1,9 +1,7 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 {- |
    Module      : Data.Graph.Analysis.Algorithms.Clustering
    Description : Clustering and grouping algorithms.
-   Copyright   : (c) Ivan Lazar Miljenovic 2008
+   Copyright   : (c) Ivan Lazar Miljenovic 2009
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 

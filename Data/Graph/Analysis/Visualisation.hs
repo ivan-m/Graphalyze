@@ -1,7 +1,7 @@
 {- |
    Module      : Data.Graph.Analysis.Visualisation
    Description : Graphviz wrapper functions
-   Copyright   : (c) Ivan Lazar Miljenovic 2008
+   Copyright   : (c) Ivan Lazar Miljenovic 2009
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 

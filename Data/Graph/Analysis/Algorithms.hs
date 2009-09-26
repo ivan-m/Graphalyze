@@ -1,7 +1,7 @@
 {- |
    Module      : Data.Graph.Analysis.Algorithms
    Description : Graph analysis algorithms
-   Copyright   : (c) Ivan Lazar Miljenovic 2008
+   Copyright   : (c) Ivan Lazar Miljenovic 2009
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 

@@ -1,13 +1,7 @@
-{-# LANGUAGE  OverlappingInstances
-            , UndecidableInstances
-            , TypeSynonymInstances
-            , FlexibleInstances
- #-}
-
 {- |
    Module      : Data.Graph.Analysis.Utils
    Description : Utility functions
-   Copyright   : (c) Ivan Lazar Miljenovic 2008
+   Copyright   : (c) Ivan Lazar Miljenovic 2009
    License     : 2-Clause BSD
    Maintainer  : Ivan.Miljenovic@gmail.com
 
