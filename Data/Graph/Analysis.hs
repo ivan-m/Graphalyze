@@ -51,11 +51,14 @@ import Data.Set(Set)
 import Control.Arrow(second)
 import Control.Monad(liftM)
 
+import Data.Version(showVersion)
+import qualified Paths_Graphalyze as Paths(version)
+
 -- -----------------------------------------------------------------------------
 
 -- | The library version.
 version :: String
-version = "0.5"
+version = showVersion Paths.version
 
 {- |
    This represents the information that's being passed in that we want
