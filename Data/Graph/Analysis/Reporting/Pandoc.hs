@@ -47,7 +47,7 @@ pandocHtml :: PandocDocument
 pandocHtml = pd { writer       = writeHtmlString
                 , extension    = "html"
                 , header       = "" -- Header will be included
-                , extGraphSize = Just $ defaultWidth * 10
+                , extGraphSize = Just DefaultSize
                 }
 
 pandocLaTeX :: PandocDocument
@@ -55,7 +55,7 @@ pandocLaTeX = pd { writer    = writeLaTeX
                  , extension = "tex"
                  , header    = defaultLaTeXHeader
                  -- 4.5" should be less than \textwidth in LaTeX.
-                 , graphSize = 4.5
+                 , graphSize = createSize 4.5
                  }
 
 pandocRtf :: PandocDocument
@@ -84,10 +84,10 @@ data PandocDocument = PD { -- | The Pandoc document style
                            extension    :: FilePath,
                            -- | The Pandoc header to use
                            header       :: String,
-                           -- | Maximum width of graphs to be produced.
-                           graphSize    :: Double,
-                           -- | Optional maximum width of external linked graph.
-                           extGraphSize :: Maybe Double
+                           -- | Size of graphs to be produced.
+                           graphSize    :: GraphSize,
+                           -- | Optional size of external linked graphs.
+                           extGraphSize :: Maybe GraphSize
                          }
 
 -- | Some default sizes.  Note that all other fields of 'PandocDocument'
@@ -96,12 +96,15 @@ pd :: PandocDocument
 pd = PD { writer       = undefined,
           extension    = undefined,
           header       = undefined,
-          graphSize    = defaultWidth,
+          graphSize    = defaultSize,
           extGraphSize = Nothing
         }
 
 defaultWidth :: Double
 defaultWidth = 10
+
+defaultSize :: GraphSize
+defaultSize = createSize defaultWidth
 
 instance DocumentGenerator PandocDocument where
     createDocument = createPandoc
@@ -118,8 +121,8 @@ writerOptions = defaultWriterOptions { writerStandalone = True
 data PandocProcess = PP { secLevel :: Int
                         , filedir  :: FilePath
                         , graphdir :: FilePath
-                        , grSize   :: Point
-                        , eGSize   :: Maybe Point
+                        , grSize   :: GraphSize
+                        , eGSize   :: Maybe GraphSize
                         }
 
 -- | Start with a level 1 heading.
@@ -158,8 +161,8 @@ createPandoc p d = do created <- tryCreateDirectory dir
       htmlAuthDt = htmlInfo auth dt
       pp = defaultProcess { filedir = dir
                           , graphdir = gdir
-                          , grSize = createSize $ graphSize p
-                          , eGSize = fmap createSize $ extGraphSize p
+                          , grSize = graphSize p
+                          , eGSize = extGraphSize p
                           }
       opts = writerOptions { writerHeader = (header p) }
       convert = writer p opts
