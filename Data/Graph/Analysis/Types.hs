@@ -182,7 +182,7 @@ class (ClusterType (Cluster cl)) => ClusterLabel cl where
     cluster   :: cl -> Cluster cl
 
     -- | The actual label.
-    nodelabel :: cl -> Label cl
+    nodeLabel :: cl -> Label cl
 
 -- | A class used to define which types are valid for clusters.
 class (Ord c) => ClusterType c where
@@ -208,7 +208,7 @@ instance ClusterLabel (GenCluster a) where
     type Label (GenCluster a) = a
 
     cluster = clust
-    nodelabel = nLbl
+    nodeLabel = nLbl
 
 -- | Label type for storing node positions.  Note that this isn't an
 --   instance of 'ClusterLabel' since there's no clear indication on
