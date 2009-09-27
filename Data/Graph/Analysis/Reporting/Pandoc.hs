@@ -27,7 +27,6 @@ module Data.Graph.Analysis.Reporting.Pandoc
 -- TODO : the ability to create multiple files.
 
 import Data.Graph.Analysis.Reporting
-import Data.GraphViz.Attributes(Point)
 
 import Text.Pandoc
 
