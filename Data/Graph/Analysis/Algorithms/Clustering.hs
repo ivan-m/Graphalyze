@@ -298,11 +298,13 @@ collapseGraphBy fs = collapseGr fs'
 
 -- | Use the given functions to determine which nodes to collapse,
 --   with a new label to represent the collapsed nodes.
-collapseGraphBy'    :: (DynGraph gr) => [gr (CNodes a) b -> [(NGroup, a)]]
+collapseGraphBy'    :: (DynGraph gr) => [gr a b -> [(NGroup, a)]]
                        -> gr a b -> gr a b
 collapseGraphBy' fs = unCollapse . collapseGr fs'
     where
-      fs' = map (map (second Just) .) fs
+      -- convert gr a b -> [(NGroup a)] to
+      -- gr (CNodes a) b -> [(NGroup, Maybe a)]
+      fs' = map ((.nmap head) . (map (second Just) .)) fs
 
 -- | Collapse the graph.
 collapseGr      :: (DynGraph gr) => [gr (CNodes a) b -> [(NGroup, Maybe a)]]
