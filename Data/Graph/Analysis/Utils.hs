@@ -48,12 +48,6 @@ module Data.Graph.Analysis.Utils
       lengthSort,
       groupElems,
       sortMinMax,
-      blockPrint,
-      blockPrint',
-      blockPrintList,
-      blockPrintList',
-      blockPrintWith,
-      blockPrintWith',
       shuffle,
       -- * Statistics functions
       mean,
@@ -74,7 +68,7 @@ import Data.GraphViz( dotizeGraph
                     , Pos(..)
                     , Point(..))
 
-import Data.List(nub, nubBy, (\\), find, sortBy, groupBy, unfoldr, intersperse)
+import Data.List(nub, nubBy, (\\), find, sortBy, groupBy)
 import Data.Maybe(fromJust)
 import Data.Function(on)
 import qualified Data.Set as Set
@@ -305,79 +299,6 @@ sortMinMax as = (as',aMin,aMax)
       aMin = Set.findMin aSet
       aMax = Set.findMax aSet
 
--- | Attempt to convert the @String@ form of a list into
---   as much of a square shape as possible, using a single
---   space as a separation string.
-blockPrint :: (Show a) => [a] -> String
-blockPrint = blockPrintWith " "
-
--- | Attempt to convert a list of @String@s into a single @String@
---   that is roughly a square shape, with a single space as a row
---   separator.
-blockPrint' :: [String] -> String
-blockPrint' = blockPrintWith' " "
-
--- | Attempt to convert the @String@ form of a list into
---   as much of a square shape as possible, separating values
---   with commas.
-blockPrintList :: (Show a) => [a] -> String
-blockPrintList = blockPrintWith ",  "
-
--- | Attempt to combine a list of @String@s into as much of a
---   square shape as possible, separating values with commas.
-blockPrintList' :: [String] -> String
-blockPrintList' = blockPrintWith' ",  "
-
--- | Attempt to convert the @String@ form of a list into
---   as much of a square shape as possible, using the given
---   separation string between elements in the same row.
-blockPrintWith     :: (Show a) => String -> [a] -> String
-blockPrintWith str = blockPrintWith' str . map show
-
--- | Attempt to convert the combined form of a list of @String@s
---   into as much of a square shape as possible, using the given
---   separation string between elements in the same row.
-blockPrintWith'        :: String -> [String] -> String
-blockPrintWith' sep as = init -- Remove the final '\n' on the end.
-                         . unlines $ map unwords' lns
-    where
-      lsep = length sep
-      las = addLengths as
-      -- Scale this, to take into account the height:width ratio.
-      sidelen :: Double -- Suppress defaulting messages
-      sidelen = (1.75*) . sqrt . fromIntegral . sum $ map fst las
-      slen = round sidelen
-      serr = round $ sidelen/10
-      lns = unfoldr (takeLen slen serr lsep) las
-      unwords' = concat . intersperse sep
-
--- | Using the given line length and allowed error, take the elements of
---   the next line.
-takeLen                          :: Int -> Int -> Int -> [(Int,String)]
-                                 -> Maybe ([String],[(Int,String)])
-takeLen _   _   _    []          = Nothing
-takeLen len err lsep ((l,a):als) = Just lr
-    where
-      lmax = len + err
-      lr = if l > len
-           then ([a],als) -- Overflow line of single item
-           else (a:as,als')
-      -- We subtract lsep here to take into account the spacer.
-      (as,als') = takeLine (lmax - l - lsep) lsep als
-
--- | Recursively build the rest of the line with given maximum length.
-takeLine :: Int -> Int -> [(Int,String)] -> ([String],[(Int,String)])
-takeLine len lsep als
-    | null als  = ([],als)
-    | len <= 0  = ([],als) -- This should be covered by the next guard,
-                           -- but just in case...
-    | l > len   = ([],als)
-    | otherwise = (a:as,als'')
-    where
-      ((l,a):als') = als
-      -- We subtract lsep here to take into account the spacer.
-      len' = len - l - lsep
-      (as,als'') = takeLine len' lsep als'
 
 {- |
    Shuffle a list of elements.
