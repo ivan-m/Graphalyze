@@ -176,13 +176,13 @@ type LNGroup a = [LNode a]
 --   use as the label type of graphs.
 class (ClusterType (Cluster cl)) => ClusterLabel cl where
     type Cluster cl
-    type Label cl
+    type NodeLabel cl
 
     -- | The cluster the node label belongs in.
     cluster   :: cl -> Cluster cl
 
     -- | The actual label.
-    nodeLabel :: cl -> Label cl
+    nodeLabel :: cl -> NodeLabel cl
 
 -- | A class used to define which types are valid for clusters.
 class (Ord c) => ClusterType c where
@@ -205,7 +205,7 @@ data GenCluster a = GC { clust :: Int
 
 instance ClusterLabel (GenCluster a) where
     type Cluster (GenCluster a) = Int
-    type Label (GenCluster a) = a
+    type NodeLabel (GenCluster a) = a
 
     cluster = clust
     nodeLabel = nLbl
