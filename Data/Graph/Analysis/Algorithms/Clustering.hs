@@ -18,10 +18,11 @@ module Data.Graph.Analysis.Algorithms.Clustering
       relativeNeighbourhood,
       -- * Graph Collapsing
       -- $collapsing
-      CNodes(..),
+      CNodes,
       collapseGraph,
+      collapseGraphBy,
+      collapseGraphBy',
       trivialCollapse,
-      cNodes
     ) where
 
 import Data.Graph.Analysis.Internal
@@ -271,33 +272,43 @@ nbrCluster g
 -- -----------------------------------------------------------------------------
 
 {- $collapsing
-   Collapse the /interesting/ parts of a graph down to try and show a
-   compressed overview of the whole graph.  Note that this doesn't
-   work too well on undirected graphs, since every pair of nodes forms
-   a K_2 subgraph.
+   Collapse the parts of a graph down to try and show a compressed
+   overview of the whole graph.
 
    It may be possible to extend this to a clustering algorithm by
    collapsing low density regions into high density regions.
  -}
 
 -- | A collapsed node contains a list of nodes that it represents.
-data CNodes a = CN [LNode a]
+type CNodes a = [a]
 
--- | The 'LNode's stored in a 'CNodes'.
-cNodes          :: CNodes a -> [LNode a]
-cNodes (CN lns) = lns
-
--- | This definition of 'show' is written so as to make the shapes of the
---   nodes in Graphviz roughly circular, rather than one long ellipse.
-instance (Show a) => Show (CNodes a) where
-    -- Print the labels in a roughly square shape.
-    show (CN lns) = showNodes lns
-
-collapseGraph   :: (DynGraph gr, Eq b) => gr a b -> gr (CNodes a) b
-collapseGraph g = foldl' (flip collapseAllBy) cg interestingParts
+-- | Collapse the cliques, cycles and chains in the graph down.  Note
+--   that this doesn't work too well on undirected graphs, since every
+--   pair of nodes forms a K_2 subgraph.
+collapseGraph :: (DynGraph gr, Eq b) => gr a b -> gr (CNodes a) b
+collapseGraph = collapseGraphBy interestingParts
     where
-      cg = makeCollapsible g
       interestingParts = [cliquesIn', cyclesIn', chainsIn']
+
+-- | Use the given functions to determine which nodes to collapse.
+collapseGraphBy    :: (DynGraph gr) => [gr (CNodes a) b -> [NGroup]]
+                      -> gr a b -> gr (CNodes a) b
+collapseGraphBy fs = collapseGr fs'
+    where
+      fs' = map (map (flip (,) Nothing) .) fs
+
+-- | Use the given functions to determine which nodes to collapse,
+--   with a new label to represent the collapsed nodes.
+collapseGraphBy'    :: (DynGraph gr) => [gr (CNodes a) b -> [(NGroup, a)]]
+                       -> gr a b -> gr a b
+collapseGraphBy' fs = unCollapse . collapseGr fs'
+    where
+      fs' = map (map (second Just) .) fs
+
+-- | Collapse the graph.
+collapseGr      :: (DynGraph gr) => [gr (CNodes a) b -> [(NGroup, Maybe a)]]
+                   -> gr a b -> gr (CNodes a) b
+collapseGr fs g = foldl' collapseAllBy (makeCollapsible g) fs
 
 -- | Return @'True'@ if the collapsed graph is either a singleton node
 --   or else isomorphic to the original graph (i.e. not collapsed at all).
@@ -305,12 +316,15 @@ trivialCollapse    :: (Graph gr) => gr (CNodes a) b -> Bool
 trivialCollapse cg = allCollapsed || notCollapsed
     where
       allCollapsed = single lns || null lns
-      notCollapsed = all (single . cNodes) lns
+      notCollapsed = all single lns
       lns = labels cg
 
 -- | Allow the graph to be collapsed.
 makeCollapsible :: (DynGraph gr) => gr a b -> gr (CNodes a) b
-makeCollapsible = nlmap (CN . return)
+makeCollapsible = nmap return
+
+unCollapse :: (DynGraph gr) => gr (CNodes a) b -> gr a b
+unCollapse = nmap head
 
 -- | Collapse the two given nodes into one node.
 collapse         :: (DynGraph gr) => gr (CNodes a) b -> Node -> Node
@@ -327,25 +341,35 @@ collapse g n1 n2 = if n1 == n2
                 $ (f c1 ++ f c2)
       p = nbrBy lpre'
       s = nbrBy lsuc'
-      (CN l1) = lab' c1
-      (CN l2) = lab' c2
-      c' = (p,n1,CN (l1++l2),s)
+      l1 = lab' c1
+      l2 = lab' c2
+      c' = (p,n1,l1++l2,s)
 
 -- | Collapse the list of nodes down to one node.
-collapseAll      :: (DynGraph gr) => gr (CNodes a) b -> [Node]
-                 -> gr (CNodes a) b
-collapseAll g []  = g
-collapseAll g [_]    = g
-collapseAll g (n:ns) = foldl' collapser g ns
+collapseAll               :: (DynGraph gr) => gr (CNodes a) b
+                             -> (NGroup, Maybe a)
+                             -> gr (CNodes a) b
+collapseAll g ([],_)      = g -- These two cases
+collapseAll g ([_],_)     = g -- shouldn't occur.
+collapseAll g ((n:ns),ma) = adj $ foldl' collapser g ns
     where
+      adj = maybe id (adjustLabel n) ma
       collapser g' = collapse g' n
 
+adjustLabel       :: (DynGraph gr) => Node -> a
+                     -> gr (CNodes a) b -> gr (CNodes a) b
+adjustLabel n a g = c & g'
+    where
+      (Just (p,_,_,s), g') = match n g
+      c = (p,n,[a],s)
+
 -- | Collapse all results of the given function.
-collapseAllBy     :: (DynGraph gr) => (gr (CNodes a) b -> [[Node]])
-                  -> gr (CNodes a) b -> gr (CNodes a) b
-collapseAllBy f g = case (filter (not . single) $ f g) of
+collapseAllBy     :: (DynGraph gr) => gr (CNodes a) b
+                     -> (gr (CNodes a) b -> [(NGroup, Maybe a)])
+                     -> gr (CNodes a) b
+collapseAllBy g f = case (filter (not . single . fst) $ f g) of
                       []     -> g
                              -- We re-evaluate the function in case
                              -- the original results used nodes that
                              -- have been collapsed down.
-                      (ns:_) -> collapseAllBy f (collapseAll g ns)
+                      (nsr:_) -> collapseAllBy (collapseAll g nsr) f
