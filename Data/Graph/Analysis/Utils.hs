@@ -26,6 +26,7 @@ module Data.Graph.Analysis.Utils
       mkSimple,
       compact,
       compact',
+      compactSame,
       nlmap,
       delLNodes,
       -- ** Graph layout
@@ -68,7 +69,7 @@ import Data.GraphViz( dotizeGraph
                     , Pos(..)
                     , Point(..))
 
-import Data.List(nub, nubBy, (\\), find, sortBy, groupBy)
+import Data.List(nub, nubBy, (\\), find, sort, sortBy, group, groupBy)
 import Data.Maybe(fromJust)
 import Data.Function(on)
 import qualified Data.Set as Set
@@ -168,6 +169,14 @@ compact = gmap cmpct
 --   (considering only the two nodes and not the labels).
 compact' :: (DynGraph gr) => gr a b -> gr a Int
 compact' = emap length . compact
+
+-- | Compact the graph by adjoining identical duplicate edges.
+compactSame :: (Ord b) => (DynGraph gr) => gr a b -> gr a (Int,b)
+compactSame = gmap cmpct
+    where
+      cEs = map toAdj . group . sort
+      toAdj as = let (l,n) = head as in ((length as,l),n)
+      cmpct (p,n,l,s) = (cEs p, n, l, cEs s)
 
 -- | Map over the labels on the nodes, using the node values as well.
 nlmap   :: (DynGraph gr) => (LNode a -> c) -> gr a b -> gr c b
