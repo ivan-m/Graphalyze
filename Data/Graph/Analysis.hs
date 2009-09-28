@@ -24,7 +24,6 @@ module Data.Graph.Analysis
       module Data.Graph.Inductive.Graph,
       -- * Importing data
       ImportParams(..),
-      Rel,
       importData,
       -- * Result analysis
       -- $analfuncts

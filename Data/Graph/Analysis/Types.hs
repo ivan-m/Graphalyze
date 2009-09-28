@@ -17,6 +17,7 @@ module Data.Graph.Analysis.Types
     ( -- * Graph specialization.
       GraphData(..),
       AGr,
+      Rel,
       NGroup,
       LNGroup,
       -- * Functions on @GraphData@.
