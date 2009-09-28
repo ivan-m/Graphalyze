@@ -337,7 +337,7 @@ collapse g n1 n2 = if n1 == n2
       (Just c1, g') = match n1 g
       (Just c2, g'') = match n2 g'
       -- The new edges.
-      nbrBy f = map (\(a,b) -> (b,a))
+      nbrBy f = map swap
                 . filter (\(n,_) -> notElem n [n1,n2])
                 $ (f c1 ++ f c2)
       p = nbrBy lpre'
