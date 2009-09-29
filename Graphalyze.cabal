@@ -1,5 +1,5 @@
 Name:                Graphalyze
-Version:             0.5
+Version:             0.7.0.0
 Synopsis:            Graph-Theoretic Analysis library.
 Description:         A library to use graph theory to analyse the relationships
                         inherent in discrete data.
@@ -10,21 +10,29 @@ Copyright:           (c) Ivan Lazar Miljenovic
 Author:              Ivan Lazar Miljenovic
 Maintainer:          Ivan.Miljenovic@gmail.com
 Extra-Source-Files:  TODO
-Cabal-Version:       >= 1.2
+Cabal-Version:       >= 1.6
 Build-Type:          Simple
-Tested-With:         GHC==6.8.3
 
-flag small_base
-  description: Choose the new smaller, split-up base package.
+Source-Repository head
+    Type:         darcs
+    Location:     http://code.haskell.org/Graphalyze
+
 
 Library {
-        if flag(small_base)
-            Build-Depends:   base >= 3, array, containers, directory, filepath,
-                             old-locale, process, random, time
-        else
-            Build-Depends:   base < 3
-
-        Build-Depends:       bktrees, fgl, graphviz >= 2008.9.20, pandoc
+        Build-Depends:   base >= 3 && < 5,
+                         extensible-exceptions,
+                         array,
+                         containers,
+                         directory,
+                         filepath,
+                         old-locale,
+                         process,
+                         random,
+                         time,
+                         bktrees >= 0.2,
+                         fgl >= 5.4.2.2,
+                         graphviz >= 2999.6.0.0 && < 2999.7.0.0,
+                         pandoc
 
         Exposed-Modules:     Data.Graph.Analysis
                              Data.Graph.Analysis.Types
@@ -37,7 +45,9 @@ Library {
                              Data.Graph.Analysis.Reporting
                              Data.Graph.Analysis.Reporting.Pandoc
 
-        Ghc-Options:         -Wall
-        Ghc-Prof-Options:    -auto-all
+        Other-Modules:       Data.Graph.Analysis.Internal,
+                             Paths_Graphalyze
 
+        Ghc-Options:         -Wall
+        Ghc-Prof-Options:    -prof -auto-all
 }
