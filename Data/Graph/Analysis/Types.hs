@@ -67,8 +67,13 @@ data GraphData n e = GraphData { -- | We use a graph type with no edge labels.
                                }
 
 -- | The expected roots in the data to be analysed.
-wantedRoots   :: GraphData n e -> LNGroup n
-wantedRoots g = addLabels (graph g) (wantedRootNodes g)
+wantedRoots    :: GraphData n e -> LNGroup n
+wantedRoots gd = addLabels g rs'
+    where
+      g = graph gd
+      gns = S.fromList $ nodes g
+      rs = S.fromList $ wantedRootNodes gd
+      rs' = S.toList $ gns `S.intersection` rs
 
 -- | Apply an algorithm to the data to be analysed.
 applyAlg   :: (AGr n e -> a) -> GraphData n e -> a

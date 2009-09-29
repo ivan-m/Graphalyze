@@ -149,6 +149,7 @@ createGraph fp gfp s ms (fn,inl,ag)
       fn' = fn ++ "-large"
       i2e i = Just (i,Paragraph [i])
       rt = return . fmap snd
+      -- This is safe because of the isJust above.
       toImg = fst . fromJust
       gI a o e ln nm lb fl = do mImg <- graphImage fp gfp a o e ln (nm,lb,ag)
                                 case mImg of
