@@ -125,9 +125,6 @@ data PandocProcess = PP { secLevel :: Int
                         , eGSize   :: Maybe GraphSize
                         }
 
-graphdir'   :: PandocProcess -> FilePath
-graphdir' p = filedir p </> graphdir p
-
 -- | Start with a level 1 heading.
 defaultProcess :: PandocProcess
 defaultProcess = PP { secLevel = 1
@@ -141,10 +138,10 @@ defaultProcess = PP { secLevel = 1
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
 createPandoc p d = do created <- tryCreateDirectory dir
                       -- If the first one fails, so will this one.
-                      tryCreateDirectory gdir'
+                      tryCreateDirectory $ dir </> gdir
                       if not created
                          then failDoc
-                         else do d' <- addLegend gdir' d
+                         else do d' <- addLegend dir gdir d
                                  elems <- multiElems pp $ content d'
                                  case elems of
                                    Just es -> do let es' = htmlAuthDt : es
@@ -158,7 +155,6 @@ createPandoc p d = do created <- tryCreateDirectory dir
     where
       dir = rootDirectory d
       gdir = graphDirectory d
-      gdir' = dir </> gdir
       auth = author d
       dt = date d
       meta = makeMeta (title d) auth dt
@@ -239,11 +235,12 @@ elements p (Enumeration elems) = do elems' <- multiElems' p elems
 elements p (Itemized elems)    = do elems' <- multiElems' p elems
                                     return (fmap (return . BulletList) elems')
 
-elements p (Definitions defs)  = return . Just . return . DefinitionList
+elements _ (Definitions defs)  = return . Just . return . DefinitionList
                                  $ map (inlines *** (return . Plain . inlines))
                                        defs
 
-elements p (GraphImage dg)     = do el <- createGraph (graphdir' p)
+elements p (GraphImage dg)     = do el <- createGraph (filedir p)
+                                                      (graphdir p)
                                                       (grSize p)
                                                       (eGSize p) dg
                                     case el of

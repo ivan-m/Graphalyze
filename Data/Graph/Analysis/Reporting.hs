@@ -111,28 +111,28 @@ type DocGraph = (FilePath, DocInline, DotGraph Node)
  -}
 
 -- | Create the legend section and add it to the document proper.
-addLegend       :: FilePath -> Document -> IO Document
-addLegend gfp d = do mLg <- legendToElement gfp $ legend d
-                     let es = content d
-                         es' = maybe es (flip (:) es) mLg
-                     return $ d { legend  = []
-                                , content = es'
-                                }
+addLegend       :: FilePath -> FilePath -> Document -> IO Document
+addLegend fp gfp d = do mLg <- legendToElement fp gfp $ legend d
+                        let es = content d
+                            es' = maybe es (flip (:) es) mLg
+                        return $ d { legend  = []
+                                   , content = es'
+                                   }
 
-legendToElement        :: FilePath -> [(DocGraph, DocInline)]
-                          -> IO (Maybe DocElement)
-legendToElement _   [] = return Nothing
-legendToElement gfp ls = do mDefs <- mapM (uncurry (legToDef gfp)) ls
-                            let defs = catMaybes mDefs
-                                df   = Definitions defs
-                                sec  = Section (Text "Legend") [df]
-                            return $ Just sec
+legendToElement           :: FilePath -> FilePath -> [(DocGraph, DocInline)]
+                             -> IO (Maybe DocElement)
+legendToElement _  _   [] = return Nothing
+legendToElement fp gfp ls = do mDefs <- mapM (uncurry (legToDef fp gfp)) ls
+                               let defs = catMaybes mDefs
+                                   df   = Definitions defs
+                                   sec  = Section (Text "Legend") [df]
+                               return $ Just sec
 
-legToDef            :: FilePath -> DocGraph -> DocInline
-                       -> IO (Maybe (DocInline, DocInline))
-legToDef gfp dg def = fmap (fmap (flip (,) def)) img
+legToDef               :: FilePath -> FilePath -> DocGraph -> DocInline
+                          -> IO (Maybe (DocInline, DocInline))
+legToDef fp gfp dg def = fmap (fmap (flip (,) def)) img
     where
-      img = graphImage gfp DefaultSize Png "png" DocImage dg
+      img = graphImage fp gfp DefaultSize Png "png" DocImage dg
 
 
 -- | Return today's date as a string, e.g. \"Monday 1 January, 2000\".
@@ -163,9 +163,9 @@ tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
 --   If the second set of attributes is not 'Nothing', then the first
 --   image links to the second.  The whole result is wrapped in a
 --   'Paragraph'.
-createGraph :: FilePath -> GraphSize -> Maybe GraphSize
+createGraph :: FilePath -> FilePath -> GraphSize -> Maybe GraphSize
             -> DocGraph -> IO (Maybe DocElement)
-createGraph gfp s ms (fn,inl,ag)
+createGraph fp gfp s ms (fn,inl,ag)
     = do eImg <- gI s Png "png" DocImage fn inl Nothing
          if isJust eImg
             then case ms of
@@ -178,18 +178,18 @@ createGraph gfp s ms (fn,inl,ag)
       rt = return . fmap snd
       -- This is safe because of the isJust above.
       toImg = fst . fromJust
-      gI a o e ln nm lb fl = do mImg <- graphImage gfp a o e ln (nm,lb,ag)
+      gI a o e ln nm lb fl = do mImg <- graphImage fp gfp a o e ln (nm,lb,ag)
                                 case mImg of
                                   Nothing    -> return fl
                                   (Just img) -> return $ i2e img
 
 -- | Create the inline image/link from the given DocGraph.
-graphImage :: FilePath -> GraphSize
+graphImage :: FilePath -> FilePath -> GraphSize
            -> GraphvizOutput -> FilePath
            -> (DocInline -> Location -> DocInline)
            -> DocGraph -> IO (Maybe DocInline)
-graphImage gfp s output ext link (fn,inl,dg)
-    = do created <- runGraphviz dg' output filename
+graphImage fp gfp s output ext link (fn,inl,dg)
+    = do created <- runGraphviz dg' output filename'
          if created
             then return (Just img)
             else return Nothing
@@ -197,6 +197,7 @@ graphImage gfp s output ext link (fn,inl,dg)
       dg' = setSize s dg
       fn' = unDotPath fn
       filename = gfp </> fn' <.> ext
+      filename' = fp </> filename
       loc = File filename
       img = link inl loc
 
@@ -210,7 +211,7 @@ setSize DefaultSize   g = g
 setSize (GivenSize p) g = g { graphStatements = stmts' }
     where
       stmts = graphStatements g
-      stmts' = stmts { attrStmts = a : (attrStmts stmts) }
+      stmts' = stmts { attrStmts = a : attrStmts stmts }
       a = GraphAttrs [s]
       s = Size p
 
