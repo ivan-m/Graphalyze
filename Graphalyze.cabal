@@ -3,7 +3,7 @@ Version:             0.7.0.0
 Synopsis:            Graph-Theoretic Analysis library.
 Description:         A library to use graph theory to analyse the relationships
                         inherent in discrete data.
-Category:            Algorithms
+Category:            Graphs, Algorithms
 License:             OtherLicense
 License-File:        LICENSE
 Copyright:           (c) Ivan Lazar Miljenovic
