@@ -85,7 +85,7 @@ data DocElement = Section DocInline [DocElement]
                 | Paragraph [DocInline]
                 | Enumeration [DocElement]
                 | Itemized [DocElement]
-                | Definition DocInline DocElement
+                | Definitions [(DocInline, DocInline)]
                 | GraphImage DocGraph
 
 -- | Inline elements of a document.

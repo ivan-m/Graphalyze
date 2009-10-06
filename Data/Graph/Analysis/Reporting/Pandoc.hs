@@ -32,6 +32,7 @@ import Text.Pandoc
 
 import Data.List(intersperse)
 import Data.Maybe(isNothing, fromJust)
+import Control.Arrow((***))
 import Control.Exception.Extensible(SomeException, try)
 import System.Directory(removeDirectoryRecursive)
 import System.FilePath((</>), (<.>))
@@ -236,10 +237,9 @@ elements p (Enumeration elems) = do elems' <- multiElems' p elems
 elements p (Itemized elems)    = do elems' <- multiElems' p elems
                                     return (fmap (return . BulletList) elems')
 
-elements p (Definition x def)  = do def' <- elements p def
-                                    let x' = inlines x
-                                        xdef = fmap (return . (,) x') def'
-                                    return (fmap (return . DefinitionList) xdef)
+elements p (Definitions defs)  = return . Just . return . DefinitionList
+                                 $ map (inlines *** (return . Plain . inlines))
+                                       defs
 
 elements p (GraphImage dg)     = do el <- createGraph (graphdir' p)
                                                       (grSize p)
