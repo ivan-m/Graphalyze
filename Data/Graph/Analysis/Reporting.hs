@@ -19,6 +19,7 @@ module Data.Graph.Analysis.Reporting
       DocGraph,
       -- * Helper functions
       -- $utilities
+      addLegend,
       today,
       tryCreateDirectory,
       createGraph,
@@ -29,7 +30,7 @@ module Data.Graph.Analysis.Reporting
 import Data.Graph.Inductive(Node)
 import Data.GraphViz
 
-import Data.Maybe(isJust, fromJust)
+import Data.Maybe(isJust, fromJust, catMaybes)
 import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
 import Control.Exception.Extensible(SomeException(..), tryJust)
 import System.Directory(createDirectoryIfMissing)
@@ -61,6 +62,7 @@ data Document = Doc { -- | Document location
                       author         :: String,
                       date           :: String,
                       -- | Main-matter
+                      legend         :: [(DocGraph, DocInline)],
                       content        :: [DocElement]
                     }
 
@@ -107,6 +109,31 @@ type DocGraph = (FilePath, DocInline, DotGraph Node)
 {- $utilities
    Utility functions to help with document creation.
  -}
+
+-- | Create the legend section and add it to the document proper.
+addLegend       :: FilePath -> Document -> IO Document
+addLegend gfp d = do mLg <- legendToElement gfp $ legend d
+                     let es = content d
+                         es' = maybe es (flip (:) es) mLg
+                     return $ d { legend  = []
+                                , content = es'
+                                }
+
+legendToElement        :: FilePath -> [(DocGraph, DocInline)]
+                          -> IO (Maybe DocElement)
+legendToElement _   [] = return Nothing
+legendToElement gfp ls = do mDefs <- mapM (uncurry (legToDef gfp)) ls
+                            let defs = catMaybes mDefs
+                                df   = Definitions defs
+                                sec  = Section (Text "Legend") [df]
+                            return $ Just sec
+
+legToDef            :: FilePath -> DocGraph -> DocInline
+                       -> IO (Maybe (DocInline, DocInline))
+legToDef gfp dg def = fmap (fmap (flip (,) def)) img
+    where
+      img = graphImage gfp DefaultSize Png "png" DocImage dg
+
 
 -- | Return today's date as a string, e.g. \"Monday 1 January, 2000\".
 --   This arbitrary format is chosen as there doesn't seem to be a way

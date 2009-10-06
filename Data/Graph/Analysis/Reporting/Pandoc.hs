@@ -141,10 +141,11 @@ defaultProcess = PP { secLevel = 1
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
 createPandoc p d = do created <- tryCreateDirectory dir
                       -- If the first one fails, so will this one.
-                      tryCreateDirectory $ dir </> gdir
+                      tryCreateDirectory gdir'
                       if not created
                          then failDoc
-                         else do elems <- multiElems pp (content d)
+                         else do d' <- addLegend gdir' d
+                                 elems <- multiElems pp $ content d'
                                  case elems of
                                    Just es -> do let es' = htmlAuthDt : es
                                                      pnd = Pandoc meta es'
@@ -157,6 +158,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
     where
       dir = rootDirectory d
       gdir = graphDirectory d
+      gdir' = dir </> gdir
       auth = author d
       dt = date d
       meta = makeMeta (title d) auth dt
