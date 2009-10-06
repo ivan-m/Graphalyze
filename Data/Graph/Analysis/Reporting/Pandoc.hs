@@ -124,6 +124,9 @@ data PandocProcess = PP { secLevel :: Int
                         , eGSize   :: Maybe GraphSize
                         }
 
+graphdir'   :: PandocProcess -> FilePath
+graphdir' p = filedir p </> graphdir p
+
 -- | Start with a level 1 heading.
 defaultProcess :: PandocProcess
 defaultProcess = PP { secLevel = 1
@@ -238,8 +241,7 @@ elements p (Definition x def)  = do def' <- elements p def
                                         xdef = fmap (return . (,) x') def'
                                     return (fmap (return . DefinitionList) xdef)
 
-elements p (GraphImage dg)     = do el <- createGraph (filedir p)
-                                                      (graphdir p)
+elements p (GraphImage dg)     = do el <- createGraph (graphdir' p)
                                                       (grSize p)
                                                       (eGSize p) dg
                                     case el of

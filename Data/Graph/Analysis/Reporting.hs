@@ -136,9 +136,9 @@ tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
 --   If the second set of attributes is not 'Nothing', then the first
 --   image links to the second.  The whole result is wrapped in a
 --   'Paragraph'.
-createGraph :: FilePath -> FilePath -> GraphSize -> Maybe GraphSize
+createGraph :: FilePath -> GraphSize -> Maybe GraphSize
             -> DocGraph -> IO (Maybe DocElement)
-createGraph fp gfp s ms (fn,inl,ag)
+createGraph gfp s ms (fn,inl,ag)
     = do eImg <- gI s Png "png" DocImage fn inl Nothing
          if isJust eImg
             then case ms of
@@ -151,18 +151,18 @@ createGraph fp gfp s ms (fn,inl,ag)
       rt = return . fmap snd
       -- This is safe because of the isJust above.
       toImg = fst . fromJust
-      gI a o e ln nm lb fl = do mImg <- graphImage fp gfp a o e ln (nm,lb,ag)
+      gI a o e ln nm lb fl = do mImg <- graphImage gfp a o e ln (nm,lb,ag)
                                 case mImg of
                                   Nothing    -> return fl
                                   (Just img) -> return $ i2e img
 
 -- | Create the inline image/link from the given DocGraph.
-graphImage :: FilePath -> FilePath -> GraphSize
+graphImage :: FilePath -> GraphSize
            -> GraphvizOutput -> FilePath
            -> (DocInline -> Location -> DocInline)
            -> DocGraph -> IO (Maybe DocInline)
-graphImage fp gfp s output ext link (fn,inl,dg)
-    = do created <- runGraphviz dg' output filename'
+graphImage gfp s output ext link (fn,inl,dg)
+    = do created <- runGraphviz dg' output filename
          if created
             then return (Just img)
             else return Nothing
@@ -170,7 +170,6 @@ graphImage fp gfp s output ext link (fn,inl,dg)
       dg' = setSize s dg
       fn' = unDotPath fn
       filename = gfp </> fn' <.> ext
-      filename' = fp </> filename
       loc = File filename
       img = link inl loc
 
