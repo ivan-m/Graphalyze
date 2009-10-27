@@ -31,7 +31,7 @@ Library {
                          time,
                          bktrees >= 0.2,
                          fgl >= 5.4.2.2,
-                         graphviz >= 2999.6.0.0 && < 2999.7.0.0,
+                         graphviz >= 2999.7.0.0 && < 2999.8.0.0,
                          pandoc
 
         Exposed-Modules:     Data.Graph.Analysis
