@@ -44,6 +44,7 @@ import Data.Graph.Inductive.Graph
 import Data.Maybe(mapMaybe)
 import qualified Data.Map as M
 import qualified Data.Set as S
+import Data.Set(Set)
 
 import Data.Version(showVersion)
 import qualified Paths_Graphalyze as Paths(version)
@@ -122,25 +123,25 @@ lengthAnalysis as = (av,stdDev,as'')
 
 {- |
    Compare the actual roots in the graph with those that are expected
-   (i.e. those in 'wantedRoots').  Returns (in order):
+   (i.e. those in 'wantedRootNodes').  Returns (in order):
 
-   * Those roots that are expected (i.e. elements of 'wantedRoots'
+   * Those roots that are expected (i.e. elements of 'wantedRootNodes'
      that are roots).
 
    * Those roots that are expected but not present (i.e. elements of
-     'wantedRoots' that /aren't/ roots.
+     'wantedRootNodes' that /aren't/ roots.
 
    * Unexpected roots (i.e. those roots that aren't present in
-     'wantedRoots').
+     'wantedRootNodes').
  -}
-classifyRoots    :: (Ord n) => GraphData n e -> ([LNode n], [LNode n], [LNode n])
+classifyRoots    :: GraphData n e -> (Set Node, Set Node, Set Node)
 classifyRoots gd = (areWanted, notRoots, notWanted)
     where
-      wntd = S.fromList $ wantedRoots gd
-      rts = S.fromList $ applyAlg rootsOf gd
-      areWanted = S.toList $ S.intersection wntd rts
-      notRoots  = S.toList $ S.difference wntd rts
-      notWanted = S.toList $ S.difference rts wntd
+      wntd = S.fromList $ wantedRootNodes gd
+      rts = S.fromList $ applyAlg rootsOf' gd
+      areWanted = S.intersection wntd rts
+      notRoots  = S.difference wntd rts
+      notWanted = S.difference rts wntd
 
 -- | Only return those chains (see 'chainsIn') where the non-initial
 --   nodes are /not/ expected roots.
