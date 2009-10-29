@@ -43,6 +43,31 @@ mkNodeMap :: (Ord a) => [LNode a] -> Map a Node
 mkNodeMap = M.fromList . map swap
 
 -- -----------------------------------------------------------------------------
+-- Items re-exported in Utils (needed by Types, so defined here to
+-- avoid cycles).
+
+-- | The node number of an 'LNode'.
+node :: LNode a -> Node
+node = fst
+
+-- | The label of an 'LNode'.
+label :: LNode a -> a
+label = snd
+
+-- | Find all the labelled nodes in the graph that match the given predicate.
+filterNodes     :: (Graph g) => (g a b -> LNode a -> Bool) -> g a b -> [LNode a]
+filterNodes p g = filter (p g) (labNodes g)
+
+-- | Find all the nodes in the graph that match the given predicate.
+filterNodes'     :: (Graph g) => (g a b -> Node -> Bool) -> g a b -> [Node]
+filterNodes' p g = filter (p g) (nodes g)
+
+-- | Obtain the labels for a list of 'Node's.
+--   It is assumed that each 'Node' is indeed present in the given graph.
+addLabels    :: (Graph g) => g a b -> [Node] -> [LNode a]
+addLabels gr = map (ap (,) (fromJust . lab gr))
+
+-- -----------------------------------------------------------------------------
 
 -- | A relationship between two nodes with a label.
 type Rel n e = (n, n, e)
@@ -79,11 +104,3 @@ relsToEs isDir lns rs = (unRs, graphEdges)
       dupSwap e@(x,y,l) | x == y    = [e]
                         | otherwise = [e, (y,x,l)]
       graphEdges = dupSwap' gEdges
-
--- This is needed by Types, so it's defined here and then exported by
--- Utils to avoid cyclic problems.
-
--- | Obtain the labels for a list of 'Node's.
---   It is assumed that each 'Node' is indeed present in the given graph.
-addLabels    :: (Graph g) => g a b -> [Node] -> [LNode a]
-addLabels gr = map (ap (,) (fromJust . lab gr))

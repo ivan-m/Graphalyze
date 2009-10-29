@@ -11,14 +11,14 @@ module Data.Graph.Analysis.Utils
     ( -- * Graph functions
       -- ** Data extraction
       -- $extracting
-      node,
-      label,
+      node,         -- Re-exported from Internal
+      label,        -- Re-exported from Internal
       labels,
       edge,
       eLabel,
-      addLabels, -- Re-exported from Internal
-      filterNodes,
-      filterNodes',
+      addLabels,    -- Re-exported from Internal
+      filterNodes,  -- Re-exported from Internal
+      filterNodes', -- Re-exported from Internal
       pathValues,
       -- ** Graph manipulation
       undir,
@@ -82,14 +82,6 @@ import System.Random(RandomGen, randomR)
 
 -- $extracting Extracting data from graphs.
 
--- | The node number of an 'LNode'.
-node :: LNode a -> Node
-node = fst
-
--- | The label of an 'LNode'.
-label :: LNode a -> a
-label = snd
-
 -- | The labels of all nodes in a tree.
 labels :: (Graph g) => g a b -> [a]
 labels = map label . labNodes
@@ -101,14 +93,6 @@ edge (n1,n2,_) = (n1,n2)
 -- | The label of an 'LEdge'.
 eLabel         :: LEdge b -> b
 eLabel (_,_,b) = b
-
--- | Find all the labelled nodes in the graph that match the given predicate.
-filterNodes     :: (Graph g) => (g a b -> LNode a -> Bool) -> g a b -> [LNode a]
-filterNodes p g = filter (p g) (labNodes g)
-
--- | Find all the nodes in the graph that match the given predicate.
-filterNodes'     :: (Graph g) => (g a b -> Node -> Bool) -> g a b -> [Node]
-filterNodes' p g = filter (p g) (nodes g)
 
 -- | Extract the actual 'LNode's from an 'LPath'.
 pathValues          :: LPath a -> [LNode a]
