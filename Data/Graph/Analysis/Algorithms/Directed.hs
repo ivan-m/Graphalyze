@@ -25,6 +25,11 @@ module Data.Graph.Analysis.Algorithms.Directed
       coreOf,
       -- * Clustering
       levelGraph,
+      -- * Node accessibility
+      accessibleFrom,
+      accessibleFrom',
+      accessibleOnlyFrom,
+      accessibleOnlyFrom',
       -- * Other
       leafMinPaths
     ) where
@@ -38,6 +43,7 @@ import Data.Graph.Inductive.Query.BFS(esp)
 import Data.List(minimumBy, unfoldr)
 import Data.Function(on)
 import qualified Data.Map as M
+import Data.Map(Map)
 import qualified Data.Set as S
 import Data.Set(Set)
 import Control.Monad(ap)
@@ -221,3 +227,39 @@ lfMinPth g rs l = addLabels g
                   . minimumBy (compare `on` fst)
                   . addLengths
                   $ map (\ r -> esp r l g) rs
+
+-- -----------------------------------------------------------------------------
+
+-- | Find all 'Node's that can be reached from the provided 'Node's.
+accessibleFrom   :: (Graph g) => g a b -> [Node] -> [Node]
+accessibleFrom g = S.toList . accessibleFrom' g . S.fromList
+
+-- | Find all 'Node's that can be reached from the provided nodes
+--   using 'Set's rather than lists.
+accessibleFrom'   :: (Graph g) => g a b -> Set Node -> Set Node
+accessibleFrom' g = S.unions . graphLevels' g
+
+-- | Find those 'Node's that are reachable only from the provided
+--   'Node's.
+accessibleOnlyFrom   :: (Graph g) => g a b -> [Node] -> [Node]
+accessibleOnlyFrom g = S.toList . accessibleOnlyFrom' g . S.fromList
+
+-- | Find those 'Node's that are reachable only from the provided
+--   'Node's, using 'Set's rather than lists.
+accessibleOnlyFrom'   :: (Graph g) => g a b -> Set Node -> Set Node
+accessibleOnlyFrom' g = M.keysSet
+                        . fixPoint keepOnlyInternal
+                        . setKeys (pre g)
+                        . accessibleFrom' g
+
+-- | Pseudo-inverse of 'M.keysSet'.
+setKeys   :: (Ord a) => (a -> b) -> Set a -> Map a b
+setKeys f = M.fromDistinctAscList . map (ap (,) f) . S.toAscList
+
+-- | Removing nodes which have predecessors outside of this Map.
+keepOnlyInternal :: Map Node NGroup -> Map Node NGroup
+keepOnlyInternal = M.filter =<< onlyInternalPred
+
+-- | Are these predecessor nodes all found within this Map?
+onlyInternalPred   :: Map Node NGroup -> NGroup -> Bool
+onlyInternalPred m = all (flip M.member m)

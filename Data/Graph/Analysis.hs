@@ -143,6 +143,13 @@ classifyRoots gd = (areWanted, notRoots, notWanted)
       notRoots  = S.difference wntd rts
       notWanted = S.difference rts wntd
 
+-- | Find the nodes that are not reachable from the expected roots
+--   (i.e. those in 'wantedRootNodes').
+unaccessibleNodes    :: GraphData n e -> Set Node
+unaccessibleNodes gd = applyAlg accessibleOnlyFrom' gd notWanted
+    where
+      (_,_,notWanted) = classifyRoots gd
+
 -- | Only return those chains (see 'chainsIn') where the non-initial
 --   nodes are /not/ expected roots.
 interiorChains    :: (Eq n, Eq e) => GraphData n e -> [LNGroup n]
