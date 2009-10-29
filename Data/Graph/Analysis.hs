@@ -29,6 +29,7 @@ module Data.Graph.Analysis
       -- $analfuncts
       lengthAnalysis,
       classifyRoots,
+      unaccessibleNodes,
       interiorChains
     ) where
 
