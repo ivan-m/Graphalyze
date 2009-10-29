@@ -40,6 +40,7 @@ import Data.Function(on)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Set(Set)
+import Control.Monad(ap)
 
 -- -----------------------------------------------------------------------------
 {- $ends
@@ -179,11 +180,15 @@ levelGraph g = gmap addLbl g
 type NSet = Set Node
 
 -- | Obtain the levels in the graph.
-graphLevels   :: (DynGraph g) => g a b -> [NSet]
-graphLevels g = unfoldr getNextLevel
-                 (S.fromList $ rootsOf' g, g)
+graphLevels :: (Graph g) => g a b -> [NSet]
+graphLevels = ap graphLevels' (S.fromList . rootsOf')
 
-getNextLevel :: (DynGraph g) => (NSet, g a b)
+graphLevels'   :: (Graph g) => g a b -> NSet -> [NSet]
+graphLevels' g = unfoldr getNextLevel . flip (,) g
+
+-- | The @(NSet, g a b)@ parameters are the current nodes to be
+--   starting with in the current graph.
+getNextLevel :: (Graph g) => (NSet, g a b)
                 -> Maybe (NSet, (NSet, g a b))
 getNextLevel (ns,g)
     | S.null ns = Nothing
