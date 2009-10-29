@@ -22,6 +22,8 @@ module Data.Graph.Analysis.Types
       LNGroup,
       -- * Functions on @GraphData@.
       wantedRoots,
+      addRoots,
+      addRootsBy,
       applyAlg,
       applyDirAlg,
       mergeUnused,
@@ -74,6 +76,22 @@ wantedRoots gd = addLabels g rs'
       gns = S.fromList $ nodes g
       rs = S.fromList $ wantedRootNodes gd
       rs' = S.toList $ gns `S.intersection` rs
+
+-- | Add extra expected root nodes.  No checks are made that these
+--   are valid 'Node' values.
+addRoots      :: GraphData n e -> NGroup -> GraphData n e
+addRoots gd ns = gd { wantedRootNodes = S.toList rs' }
+    where
+      ns' = S.fromList ns
+      rs = S.fromList $ wantedRootNodes gd
+      rs' = rs `S.union` ns'
+
+-- | Use a filtering function to find extra root nodes to add.
+addRootsBy      :: (LNode n -> Bool) -> GraphData n e -> GraphData n e
+addRootsBy p gd = addRoots gd rs'
+    where
+      p' _ = p
+      rs' = map node $ applyAlg (filterNodes p') gd
 
 -- | Apply an algorithm to the data to be analysed.
 applyAlg   :: (AGr n e -> a) -> GraphData n e -> a
