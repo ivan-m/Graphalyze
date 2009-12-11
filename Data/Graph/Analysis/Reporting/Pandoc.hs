@@ -236,7 +236,8 @@ elements p (Itemized elems)    = do elems' <- multiElems' p elems
                                     return (fmap (return . BulletList) elems')
 
 elements _ (Definitions defs)  = return . Just . return . DefinitionList
-                                 $ map (inlines *** (return . Plain . inlines))
+                                 $ map (inlines *** ((:[]) . (:[])
+                                                     . Plain . inlines))
                                        defs
 
 elements p (GraphImage dg)     = do el <- createGraph (filedir p)
