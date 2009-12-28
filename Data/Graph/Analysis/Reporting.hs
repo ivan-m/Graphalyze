@@ -16,7 +16,7 @@ module Data.Graph.Analysis.Reporting
       DocElement(..),
       DocInline(..),
       GraphSize(..),
-      DocGraph,
+      DocGraph(..),
       -- * Helper functions
       -- $utilities
       addLegend,
@@ -103,8 +103,11 @@ data DocInline = Text String
 -- | Specify the 'DotGraph' to turn into an image, its filename (sans
 --   extension) and its caption.  The 'DotGraph' should not have a
 --   'Size' set.
-type DocGraph = (FilePath, DocInline, DotGraph Node)
-
+data DocGraph = DG { imageFile   :: FilePath
+                   , description :: DocInline
+                   , dotGraph    :: DotGraph Node
+                   }
+              deriving (Eq, Ord, Show, Read)
 
 -- | Specify the size the 'DotGraph' should be at.
 data GraphSize = GivenSize Point  -- ^ Specify the size to use.
@@ -172,7 +175,7 @@ tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
 --   'Paragraph'.
 createGraph :: FilePath -> FilePath -> GraphSize -> Maybe GraphSize
             -> DocGraph -> IO (Maybe DocElement)
-createGraph fp gfp s ms (fn,inl,ag)
+createGraph fp gfp s ms (DG fn inl ag)
     = do eImg <- gI s Png DocImage fn inl Nothing
          if isJust eImg
             then case ms of
@@ -185,7 +188,7 @@ createGraph fp gfp s ms (fn,inl,ag)
       rt = return . fmap snd
       -- This is safe because of the isJust above.
       toImg = fst . fromJust
-      gI a o ln nm lb fl = do mImg <- graphImage fp gfp a o ln (nm,lb,ag)
+      gI a o ln nm lb fl = do mImg <- graphImage fp gfp a o ln (DG nm lb ag)
                               case mImg of
                                 Nothing    -> return fl
                                 (Just img) -> return $ i2e img
@@ -195,7 +198,7 @@ graphImage :: FilePath -> FilePath -> GraphSize
            -> GraphvizOutput
            -> (DocInline -> Location -> DocInline)
            -> DocGraph -> IO (Maybe DocInline)
-graphImage fp gfp s output link (fn,inl,dg)
+graphImage fp gfp s output link (DG fn inl dg)
     = do created <- addExtension (runGraphviz dg') output filename'
          return $ case created of
                     Success -> Just img
