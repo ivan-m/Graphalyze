@@ -208,8 +208,8 @@ graphImage :: FilePath -> FilePath
 graphImage fp gfp (VProps s output) link (DG fn inl dg)
     = do created <- addExtension (runGraphviz dg') output filename'
          return $ case created of
-                    Success -> Just img
-                    Error _ -> Nothing
+                    Right{} -> Just img
+                    Left{} -> Nothing
     where
       dg' = setSize s dg
       fn' = unDotPath fn
