@@ -79,25 +79,25 @@ pandocMarkdown = pd { writer = writeMarkdown
 -- | Definition of a Pandoc Document.  Size measurements are in inches,
 --   and a 6:4 ratio is used for width:length.
 data PandocDocument = PD { -- | The Pandoc document style
-                           writer       :: WriterOptions -> Pandoc -> String,
+                           writer       :: WriterOptions -> Pandoc -> String
                            -- | The file extension used
-                           extension    :: FilePath,
+                         , extension    :: FilePath
                            -- | The Pandoc header to use
-                           header       :: String,
+                         , header       :: String
                            -- | Size of graphs to be produced.
-                           graphSize    :: GraphSize,
+                         , graphSize    :: GraphSize
                            -- | Optional size of external linked graphs.
-                           extGraphSize :: Maybe GraphSize
+                         , extGraphSize :: Maybe GraphSize
                          }
 
 -- | Some default sizes.  Note that all other fields of 'PandocDocument'
 --   still need to be defined.
 pd :: PandocDocument
-pd = PD { writer       = undefined,
-          extension    = undefined,
-          header       = undefined,
-          graphSize    = defaultSize,
-          extGraphSize = Nothing
+pd = PD { writer       = undefined
+        , extension    = undefined
+        , header       = undefined
+        , graphSize    = defaultSize
+        , extGraphSize = Nothing
         }
 
 defaultWidth :: Double
@@ -124,6 +124,7 @@ data PandocProcess = PP { secLevel :: Int
                         , grSize   :: GraphSize
                         , eGSize   :: Maybe GraphSize
                         }
+                   deriving (Eq, Ord, Show, Read)
 
 -- | Start with a level 1 heading.
 defaultProcess :: PandocProcess

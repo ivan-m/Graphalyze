@@ -52,19 +52,20 @@ import System.Locale(defaultTimeLocale)
    instance of 'DocumentGenerator'.
  -}
 data Document = Doc { -- | Document location
-                      rootDirectory  :: FilePath,
-                      fileFront      :: String,
+                      rootDirectory  :: FilePath
+                    , fileFront      :: String
                       -- | The sub-directory of 'rootDirectory',
                       --   where graphs are to be created.
-                      graphDirectory :: FilePath,
+                    , graphDirectory :: FilePath
                       -- | Pre-matter
-                      title          :: DocInline,
-                      author         :: String,
-                      date           :: String,
+                    , title          :: DocInline
+                    , author         :: String
+                    , date           :: String
                       -- | Main-matter
-                      legend         :: [(DocGraph, DocInline)],
-                      content        :: [DocElement]
+                    , legend         :: [(DocGraph, DocInline)]
+                    , content        :: [DocElement]
                     }
+                deriving (Eq, Ord, Show, Read)
 
 -- | Represents the class of document generators.
 class DocumentGenerator dg where
@@ -76,11 +77,9 @@ class DocumentGenerator dg where
     docExtension   :: dg -> String
 
 -- | Representation of a location, either on the internet or locally.
-data Location = Web String | File FilePath
-
-instance Show Location where
-    show (Web url) = url
-    show (File fp) = fp
+data Location = Web String
+              | File FilePath
+              deriving (Eq, Ord, Show, Read)
 
 -- | Elements of a document.
 data DocElement = Section DocInline [DocElement]
@@ -89,6 +88,7 @@ data DocElement = Section DocInline [DocElement]
                 | Itemized [DocElement]
                 | Definitions [(DocInline, DocInline)]
                 | GraphImage DocGraph
+                deriving (Eq, Ord, Show, Read)
 
 -- | Inline elements of a document.
 data DocInline = Text String
@@ -98,11 +98,18 @@ data DocInline = Text String
                | Emphasis DocInline
                | DocLink DocInline Location
                | DocImage DocInline Location
+               deriving (Eq, Ord, Show, Read)
 
 -- | Specify the 'DotGraph' to turn into an image, its filename (sans
 --   extension) and its caption.  The 'DotGraph' should not have a
 --   'Size' set.
 type DocGraph = (FilePath, DocInline, DotGraph Node)
+
+
+-- | Specify the size the 'DotGraph' should be at.
+data GraphSize = GivenSize Point  -- ^ Specify the size to use.
+               | DefaultSize      -- ^ Let GraphViz choose an appropriate size.
+               deriving (Eq, Ord, Show, Read)
 
 -- -----------------------------------------------------------------------------
 
@@ -200,10 +207,6 @@ graphImage fp gfp s output link (fn,inl,dg)
       filename' = fp </> filename
       loc = File filename
       img = link inl loc
-
--- | Specify the size the 'DotGraph' should be at.
-data GraphSize = GivenSize Point  -- ^ Specify the size to use.
-               | DefaultSize      -- ^ Let GraphViz choose an appropriate size.
 
 -- | Add a 'GlobalAttribute' to the 'DotGraph' specifying the given size.
 setSize                 :: GraphSize -> DotGraph a -> DotGraph a
