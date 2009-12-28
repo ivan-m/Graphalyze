@@ -17,6 +17,7 @@ module Data.Graph.Analysis.Reporting
       DocInline(..),
       GraphSize(..),
       DocGraph(..),
+      VisProperties(..),
       -- * Helper functions
       -- $utilities
       addLegend,
@@ -109,6 +110,12 @@ data DocGraph = DG { imageFile   :: FilePath
                    }
               deriving (Eq, Ord, Show, Read)
 
+-- | A specification on how to visualise a 'DocGraph'.
+data VisProperties = VProps { size   :: GraphSize
+                            , format :: GraphvizOutput
+                            }
+                   deriving (Eq, Ord, Show, Read)
+
 -- | Specify the size the 'DotGraph' should be at.
 data GraphSize = GivenSize Point  -- ^ Specify the size to use.
                | DefaultSize      -- ^ Let GraphViz choose an appropriate size.
@@ -142,7 +149,7 @@ legToDef               :: FilePath -> FilePath -> DocGraph -> DocInline
                           -> IO (Maybe (DocInline, DocInline))
 legToDef fp gfp dg def = fmap (fmap (flip (,) def)) img
     where
-      img = graphImage fp gfp DefaultSize Png DocImage dg
+      img = graphImage fp gfp (VProps DefaultSize Png) DocImage dg
 
 
 -- | Return today's date as a string, e.g. \"Monday 1 January, 2000\".
@@ -173,14 +180,14 @@ tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
 --   If the second set of attributes is not 'Nothing', then the first
 --   image links to the second.  The whole result is wrapped in a
 --   'Paragraph'.
-createGraph :: FilePath -> FilePath -> GraphSize -> Maybe GraphSize
+createGraph :: FilePath -> FilePath -> VisProperties -> Maybe VisProperties
             -> DocGraph -> IO (Maybe DocElement)
 createGraph fp gfp s ms (DG fn inl ag)
-    = do eImg <- gI s Png DocImage fn inl Nothing
+    = do eImg <- gI s DocImage fn inl Nothing
          if isJust eImg
             then case ms of
-                   Nothing    -> rt eImg
-                   (Just s') -> rt =<< gI s' Svg DocLink fn' (toImg eImg) eImg
+                   Nothing   -> rt eImg
+                   (Just s') -> rt =<< gI s' DocLink fn' (toImg eImg) eImg
             else return Nothing
     where
       fn' = fn ++ "-large"
@@ -188,17 +195,17 @@ createGraph fp gfp s ms (DG fn inl ag)
       rt = return . fmap snd
       -- This is safe because of the isJust above.
       toImg = fst . fromJust
-      gI a o ln nm lb fl = do mImg <- graphImage fp gfp a o ln (DG nm lb ag)
-                              case mImg of
-                                Nothing    -> return fl
-                                (Just img) -> return $ i2e img
+      gI a ln nm lb fl = do mImg <- graphImage fp gfp a ln (DG nm lb ag)
+                            case mImg of
+                              Nothing    -> return fl
+                              (Just img) -> return $ i2e img
 
 -- | Create the inline image/link from the given DocGraph.
-graphImage :: FilePath -> FilePath -> GraphSize
-           -> GraphvizOutput
+graphImage :: FilePath -> FilePath
+           -> VisProperties
            -> (DocInline -> Location -> DocInline)
            -> DocGraph -> IO (Maybe DocInline)
-graphImage fp gfp s output link (DG fn inl dg)
+graphImage fp gfp (VProps s output) link (DG fn inl dg)
     = do created <- addExtension (runGraphviz dg') output filename'
          return $ case created of
                     Success -> Just img

@@ -28,6 +28,7 @@ module Data.Graph.Analysis.Reporting.Pandoc
 
 import Data.Graph.Analysis.Reporting
 
+import Data.GraphViz.Commands(GraphvizOutput(Png, Svg))
 import Text.Pandoc
 
 import Data.List(intersperse)
@@ -44,18 +45,21 @@ import System.FilePath((</>), (<.>))
  -}
 
 pandocHtml :: PandocDocument
-pandocHtml = pd { writer       = writeHtmlString
-                , extension    = "html"
-                , header       = "" -- Header will be included
-                , extGraphSize = Just DefaultSize
+pandocHtml = pd { writer        = writeHtmlString
+                , extension     = "html"
+                , header        = "" -- Header will be included
+                , extGraphProps = Just
+                                  $ VProps { size   = DefaultSize
+                                           , format = Svg
+                                           }
                 }
 
 pandocLaTeX :: PandocDocument
-pandocLaTeX = pd { writer    = writeLaTeX
-                 , extension = "tex"
-                 , header    = defaultLaTeXHeader
+pandocLaTeX = pd { writer     = writeLaTeX
+                 , extension  = "tex"
+                 , header     = defaultLaTeXHeader
                  -- 4.5" should be less than \textwidth in LaTeX.
-                 , graphSize = createSize 4.5
+                 , graphProps = defaultProps { size = createSize 4.5 }
                  }
 
 pandocRtf :: PandocDocument
@@ -79,32 +83,34 @@ pandocMarkdown = pd { writer = writeMarkdown
 -- | Definition of a Pandoc Document.  Size measurements are in inches,
 --   and a 6:4 ratio is used for width:length.
 data PandocDocument = PD { -- | The Pandoc document style
-                           writer       :: WriterOptions -> Pandoc -> String
+                           writer        :: WriterOptions -> Pandoc -> String
                            -- | The file extension used
-                         , extension    :: FilePath
+                         , extension     :: FilePath
                            -- | The Pandoc header to use
-                         , header       :: String
+                         , header        :: String
                            -- | Size of graphs to be produced.
-                         , graphSize    :: GraphSize
+                         , graphProps    :: VisProperties
                            -- | Optional size of external linked graphs.
-                         , extGraphSize :: Maybe GraphSize
+                         , extGraphProps :: Maybe VisProperties
                          }
 
 -- | Some default sizes.  Note that all other fields of 'PandocDocument'
 --   still need to be defined.
 pd :: PandocDocument
-pd = PD { writer       = undefined
-        , extension    = undefined
-        , header       = undefined
-        , graphSize    = defaultSize
-        , extGraphSize = Nothing
+pd = PD { writer        = undefined
+        , extension     = undefined
+        , header        = undefined
+        , graphProps    = defaultProps
+        , extGraphProps = Nothing
         }
 
 defaultWidth :: Double
 defaultWidth = 10
 
-defaultSize :: GraphSize
-defaultSize = createSize defaultWidth
+defaultProps :: VisProperties
+defaultProps = VProps { size   = createSize defaultWidth
+                      , format = Png
+                      }
 
 instance DocumentGenerator PandocDocument where
     createDocument = createPandoc
@@ -121,8 +127,8 @@ writerOptions = defaultWriterOptions { writerStandalone = True
 data PandocProcess = PP { secLevel :: Int
                         , filedir  :: FilePath
                         , graphdir :: FilePath
-                        , grSize   :: GraphSize
-                        , eGSize   :: Maybe GraphSize
+                        , grProps  :: VisProperties
+                        , eGProps  :: Maybe VisProperties
                         }
                    deriving (Eq, Ord, Show, Read)
 
@@ -131,8 +137,8 @@ defaultProcess :: PandocProcess
 defaultProcess = PP { secLevel = 1
                     , graphdir = undefined
                     , filedir  = undefined
-                    , grSize   = undefined
-                    , eGSize   = undefined
+                    , grProps   = undefined
+                    , eGProps   = undefined
                     }
 
 -- | Create the document.
@@ -163,8 +169,8 @@ createPandoc p d = do created <- tryCreateDirectory dir
       htmlAuthDt = htmlInfo auth dt
       pp = defaultProcess { filedir = dir
                           , graphdir = gdir
-                          , grSize = graphSize p
-                          , eGSize = extGraphSize p
+                          , grProps = graphProps p
+                          , eGProps = extGraphProps p
                           }
       opts = writerOptions { writerHeader = (header p) }
       convert = writer p opts
@@ -243,8 +249,8 @@ elements _ (Definitions defs)  = return . Just . return . DefinitionList
 
 elements p (GraphImage dg)     = do el <- createGraph (filedir p)
                                                       (graphdir p)
-                                                      (grSize p)
-                                                      (eGSize p) dg
+                                                      (grProps p)
+                                                      (eGProps p) dg
                                     case el of
                                       Nothing  -> return Nothing
                                       Just img -> elements p img
