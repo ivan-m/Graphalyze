@@ -205,13 +205,13 @@ graphImage :: FilePath -> FilePath
            -> VisProperties
            -> (DocInline -> Location -> DocInline)
            -> DocGraph -> IO (Maybe DocInline)
-graphImage fp gfp (VProps s output) link (DG fn inl dg)
-    = do created <- addExtension (runGraphviz dg') output filename'
+graphImage fp gfp vp link (DG fn inl dg)
+    = do created <- addExtension (runGraphviz dg') (format vp) filename'
          return $ case created of
                     Right{} -> Just img
                     Left{} -> Nothing
     where
-      dg' = setSize s dg
+      dg' = setSize vp dg
       fn' = unDotPath fn
       filename = gfp </> fn'
       filename' = fp </> filename
@@ -219,14 +219,14 @@ graphImage fp gfp (VProps s output) link (DG fn inl dg)
       img = link inl loc
 
 -- | Add a 'GlobalAttribute' to the 'DotGraph' specifying the given size.
-setSize                 :: GraphSize -> DotGraph a -> DotGraph a
-setSize DefaultSize   g = g
-setSize (GivenSize p) g = g { graphStatements = stmts' }
-    where
-      stmts = graphStatements g
-      stmts' = stmts { attrStmts = a : attrStmts stmts }
-      a = GraphAttrs [s]
-      s = Size p
+setSize      :: VisProperties -> DotGraph a -> DotGraph a
+setSize vp g = case size vp of
+                 DefaultSize   -> g
+                 (GivenSize s) -> g { graphStatements = setS s}
+  where
+    setS s = stmts { attrStmts = sizeA s : attrStmts stmts }
+    stmts = graphStatements g
+    sizeA s = GraphAttrs [Size s]
 
 -- | Using a 6:4 ratio, create the given 'Point' representing
 --   width,height from the width.
