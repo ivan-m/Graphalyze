@@ -32,11 +32,10 @@ module Data.Graph.Analysis.Reporting
 import Data.Graph.Inductive(Node)
 import Data.GraphViz
 
-import Data.Maybe(isJust, fromJust, catMaybes)
 import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
 import Control.Exception.Extensible(SomeException(..), tryJust)
 import System.Directory(createDirectoryIfMissing)
-import System.FilePath((</>), (<.>))
+import System.FilePath((</>))
 import System.Locale(defaultTimeLocale)
 import Control.Monad(liftM, when)
 

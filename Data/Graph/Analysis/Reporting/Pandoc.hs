@@ -49,10 +49,9 @@ pandocHtml :: PandocDocument
 pandocHtml = pd { writer        = writeHtmlString
                 , extension     = "html"
                 , header        = "" -- Header will be included
-                , extGraphProps = Just
-                                  $ VProps { size   = DefaultSize
-                                           , format = Svg
-                                           }
+                , extGraphProps = Just VProps { size   = DefaultSize
+                                              , format = Svg
+                                              }
                 }
 
 pandocLaTeX :: PandocDocument
@@ -108,8 +107,8 @@ pd = PD { writer        = undefined
         , keepDot       = False
         }
 
-alsoSaveDot    :: PandocDocument -> PandocDocument
-alsoSaveDot pd = pd { keepDot = True }
+alsoSaveDot   :: PandocDocument -> PandocDocument
+alsoSaveDot p = p { keepDot = True }
 
 defaultWidth :: Double
 defaultWidth = 10
