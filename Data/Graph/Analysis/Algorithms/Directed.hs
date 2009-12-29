@@ -261,5 +261,5 @@ keepOnlyInternal :: Map Node NGroup -> Map Node NGroup
 keepOnlyInternal = M.filter =<< onlyInternalPred
 
 -- | Are these predecessor nodes all found within this Map?
-onlyInternalPred   :: Map Node NGroup -> NGroup -> Bool
-onlyInternalPred m = all (flip M.member m)
+onlyInternalPred :: Map Node NGroup -> NGroup -> Bool
+onlyInternalPred = all . flip M.member
