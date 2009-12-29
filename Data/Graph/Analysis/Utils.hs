@@ -17,6 +17,9 @@ module Data.Graph.Analysis.Utils
       edge,
       eLabel,
       addLabels,    -- Re-exported from Internal
+      addLabels',   -- Re-exported from Internal
+      getLabels,    -- Re-exported from Internal
+      getLabels',   -- Re-exported from Internal
       filterNodes,  -- Re-exported from Internal
       filterNodes', -- Re-exported from Internal
       pathValues,

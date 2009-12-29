@@ -17,6 +17,8 @@ import Data.Graph.Inductive.Graph
 import Data.Either(partitionEithers)
 import qualified Data.Map as M
 import Data.Map(Map)
+import qualified Data.Set as S
+import Data.Set(Set)
 import Data.Maybe(fromJust)
 import Control.Arrow((***))
 import Control.Monad(ap)
@@ -66,6 +68,25 @@ filterNodes' p g = filter (p g) (nodes g)
 --   It is assumed that each 'Node' is indeed present in the given graph.
 addLabels    :: (Graph g) => g a b -> [Node] -> [LNode a]
 addLabels gr = map (ap (,) (fromJust . lab gr))
+
+-- | Obtain the labels for a 'Set' of 'Node's.
+--   It is assumed that each 'Node' is indeed present in the given graph.
+addLabels'    :: (Ord a, Graph g) => g a b -> Set Node -> Set (LNode a)
+addLabels' gr = S.map (ap (,) (fromJust . lab gr))
+
+-- | Obtain the labels for a list of 'Node's.
+--   It is assumed that each 'Node' is indeed present in the given graph.
+getLabels   :: (Graph g) => g a b -> [Node] -> [a]
+getLabels gr = map label . addLabels gr
+
+-- | Obtain the labels for a list of 'Node's.
+--   It is assumed that each 'Node' is indeed present in the given graph.
+getLabels'   :: (Ord a, Graph g) => g a b -> Set Node -> Set a
+getLabels' gr = S.fromList -- List fusion might make this more
+                           -- efficient than multiple S.map's with the
+                           -- resulting internal re-organisation.
+                . getLabels gr
+                . S.toList
 
 -- -----------------------------------------------------------------------------
 
