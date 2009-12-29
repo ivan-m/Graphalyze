@@ -31,7 +31,8 @@ module Data.Graph.Analysis.Algorithms.Directed
       accessibleOnlyFrom,
       accessibleOnlyFrom',
       -- * Other
-      leafMinPaths
+      leafMinPaths,
+      leafMinPaths'
     ) where
 
 import Data.Graph.Analysis.Types
@@ -218,6 +219,14 @@ leafMinPaths g = map (lfMinPth g rs) ls
     where
       rs = rootsOf' g
       ls = leavesOf' g
+
+{- |
+   The shortest paths to each of the leaves in the graph (excluding
+   singletons).  This can be used to obtain an indication of the
+   overall height/depth of the graph.
+ -}
+leafMinPaths' :: (Graph g) => g a b -> [NGroup]
+leafMinPaths' = map (map node) . leafMinPaths
 
 -- | Given the list of roots in this graph, find the shortest path to
 --   this leaf node.
