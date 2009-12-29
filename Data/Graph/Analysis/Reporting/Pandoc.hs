@@ -107,6 +107,7 @@ pd = PD { writer        = undefined
         , keepDot       = False
         }
 
+-- | Also save the generated Dot code to file when creating visualisations.
 alsoSaveDot   :: PandocDocument -> PandocDocument
 alsoSaveDot p = p { keepDot = True }
 

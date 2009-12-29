@@ -7,6 +7,9 @@
 
    Clustering and grouping algorithms that are graph-invariant and require
    no user intervention.
+
+   For a clustering algorithm that works only on directed graphs, see
+   @levelGraph@ in "Data.Graph.Analysis.Algorithms.Directed".
  -}
 module Data.Graph.Analysis.Algorithms.Clustering
     ( -- * Clustering Algorithms
