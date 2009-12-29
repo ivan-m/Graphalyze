@@ -147,9 +147,14 @@ classifyRoots gd = (areWanted, notRoots, notWanted)
 -- | Find the nodes that are not reachable from the expected roots
 --   (i.e. those in 'wantedRootNodes').
 unaccessibleNodes    :: GraphData n e -> Set Node
-unaccessibleNodes gd = applyAlg accessibleOnlyFrom' gd notWanted
+unaccessibleNodes gd = allNs `S.difference` reachableNs
     where
-      (_,_,notWanted) = classifyRoots gd
+      -- We can't use accessibleOnlyFrom' on notWanted from
+      -- classifyRoots, as there might be nodes that are roots but not
+      -- detectable (e.g. a loop).
+      allNs = S.fromList $ applyAlg nodes  gd
+      rs = S.fromList $ applyAlg rootsOf' gd
+      reachableNs = applyAlg accessibleFrom' gd rs
 
 -- | Only return those chains (see 'chainsIn') where the non-initial
 --   nodes are /not/ expected roots.
