@@ -37,6 +37,7 @@ import Control.Exception.Extensible(SomeException(..), tryJust)
 import System.Directory(createDirectoryIfMissing)
 import System.FilePath((</>), (<.>))
 import System.Locale(defaultTimeLocale)
+import Control.Monad(liftM)
 
 -- -----------------------------------------------------------------------------
 
@@ -104,7 +105,9 @@ data DocInline = Text String
 -- | Specify the 'DotGraph' to turn into an image, its filename (sans
 --   extension) and its caption.  The 'DotGraph' should not have a
 --   'Size' set.
-data DocGraph = DG { imageFile   :: FilePath
+data DocGraph = DG {  -- | What name to provide the image file
+                      --   (without an extension).
+                     imageFile   :: FilePath
                    , description :: DocInline
                    , dotGraph    :: DotGraph Node
                    }
@@ -128,29 +131,30 @@ data GraphSize = GivenSize Point  -- ^ Specify the size to use.
  -}
 
 -- | Create the legend section and add it to the document proper.
-addLegend       :: FilePath -> FilePath -> Document -> IO Document
-addLegend fp gfp d = do mLg <- legendToElement fp gfp $ legend d
-                        let es = content d
-                            es' = maybe es (flip (:) es) mLg
-                        return $ d { legend  = []
-                                   , content = es'
-                                   }
+addLegend             :: FilePath -> FilePath -> VisProperties
+                         -> Document -> IO Document
+addLegend fp gfp vp d = do mLg <- legendToElement fp gfp vp $ legend d
+                           let es = content d
+                               es' = maybe es (flip (:) es) mLg
+                           return $ d { legend  = []
+                                      , content = es'
+                                      }
 
-legendToElement           :: FilePath -> FilePath -> [(DocGraph, DocInline)]
+legendToElement           :: FilePath -> FilePath -> VisProperties
+                             -> [(DocGraph, DocInline)]
                              -> IO (Maybe DocElement)
-legendToElement _  _   [] = return Nothing
-legendToElement fp gfp ls = do mDefs <- mapM (uncurry (legToDef fp gfp)) ls
-                               let defs = catMaybes mDefs
-                                   df   = Definitions defs
-                                   sec  = Section (Text "Legend") [df]
-                               return $ Just sec
+legendToElement _  _   _  [] = return Nothing
+legendToElement fp gfp vp ls = do defs <- mapM (uncurry (legToDef fp gfp vp)) ls
+                                  let df   = Definitions defs
+                                  return $ Just $ Section (Text "Legend") [df]
 
-legToDef               :: FilePath -> FilePath -> DocGraph -> DocInline
-                          -> IO (Maybe (DocInline, DocInline))
-legToDef fp gfp dg def = fmap (fmap (flip (,) def)) img
-    where
-      img = graphImage fp gfp (VProps DefaultSize Png) DocImage dg
-
+legToDef                  :: FilePath -> FilePath -> VisProperties
+                             -> DocGraph -> DocInline
+                             -> IO (DocInline, DocInline)
+legToDef fp gfp vp dg def = liftM (flip (,) def)
+                            $ graphImage' fp gfp vp' dg
+  where
+    vp' = vp { size = DefaultSize }
 
 -- | Return today's date as a string, e.g. \"Monday 1 January, 2000\".
 --   This arbitrary format is chosen as there doesn't seem to be a way
@@ -175,48 +179,51 @@ tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
       isRight (Right _) = True
       isRight _         = False
 
--- | Attempts to creates a png file (with the given filename in the
---   given directory) from the graph using the given attributes.
---   If the second set of attributes is not 'Nothing', then the first
---   image links to the second.  The whole result is wrapped in a
---   'Paragraph'.
-createGraph :: FilePath -> FilePath -> VisProperties -> Maybe VisProperties
-            -> DocGraph -> IO (Maybe DocElement)
-createGraph fp gfp s ms (DG fn inl ag)
-    = do eImg <- gI s DocImage fn inl Nothing
-         if isJust eImg
-            then case ms of
-                   Nothing   -> rt eImg
-                   (Just s') -> rt =<< gI s' DocLink fn' (toImg eImg) eImg
-            else return Nothing
-    where
-      fn' = fn ++ "-large"
-      i2e i = Just (i,Paragraph [i])
-      rt = return . fmap snd
-      -- This is safe because of the isJust above.
-      toImg = fst . fromJust
-      gI a ln nm lb fl = do mImg <- graphImage fp gfp a ln (DG nm lb ag)
-                            case mImg of
-                              Nothing    -> return fl
-                              (Just img) -> return $ i2e img
+-- | Attempts to create image files (with the given filename in the
+--   given directory) from the graph.  If the second 'VisProperties'
+--   not 'Nothing', then the first image links to the second.  The
+--   whole result is wrapped in a 'Paragraph'.  'unDotPath' is applied
+--   to the filename in the 'DocGraph'.
+createGraph :: FilePath               -- ^ Report directory
+               -> FilePath            -- ^ Image sub-directory
+               -> VisProperties       -- ^ Graph properties
+               -> Maybe VisProperties -- ^ Larger graph properties
+               -> DocGraph
+               -> IO DocElement
+createGraph rDir gDir vp mvp dg
+  = do dl  <- graphImage' rDir gDir vp dg'
+       dl' <- maybe return tryImg mvp dl
+       return $ Paragraph [dl']
+  where
+    dg' = dg { imageFile = unDotPath $ imageFile dg }
+    dgL = checkFilename vp mvp dg'
+    tryImg vp' di = liftM (either (const di) (DocLink di))
+                   $ graphImage rDir gDir vp' dgL
 
--- | Create the inline image/link from the given DocGraph.
-graphImage :: FilePath -> FilePath
-           -> VisProperties
-           -> (DocInline -> Location -> DocInline)
-           -> DocGraph -> IO (Maybe DocInline)
-graphImage fp gfp vp link (DG fn inl dg)
-    = do created <- addExtension (runGraphviz dg') (format vp) filename'
-         return $ case created of
-                    Right{} -> Just img
-                    Left{} -> Nothing
-    where
-      dg' = setSize vp dg
-      fn' = unDotPath fn
-      filename = gfp </> fn'
-      filename' = fp </> filename
-      loc = File filename
-      img = link inl loc
+-- | If both output formats are the same, then the larger image needs
+--   a different filename.
+checkFilename :: VisProperties -> Maybe VisProperties -> DocGraph -> DocGraph
+checkFilename _   Nothing    dg = dg
+checkFilename vp1 (Just vp2) dg
+  | format vp1 == format vp2 = dg { imageFile = imageFile dg ++ "-large" }
+  | otherwise                = dg
+
+graphImage :: FilePath -> FilePath -> VisProperties -> DocGraph
+              -> IO (Either DocInline Location)
+graphImage rDir gDir vp dg = liftM (either' Text File)
+                             $ addExtension (runGraphviz dot)
+                                            (format vp)
+                                            filename
+  where
+    dot = setSize vp $ dotGraph dg
+    filename = rDir </> gDir </> imageFile dg
+
+graphImage' :: FilePath -> FilePath -> VisProperties -> DocGraph
+               -> IO DocInline
+graphImage' rDir gDir vp dg = liftM (either id f)
+                              $ graphImage rDir gDir vp dg
+  where
+    f = DocImage (description dg)
 
 -- | Add a 'GlobalAttribute' to the 'DotGraph' specifying the given size.
 setSize      :: VisProperties -> DotGraph a -> DotGraph a
@@ -240,3 +247,8 @@ unDotPath = map replace
     where
       replace '.' = '-'
       replace c   = c
+
+-- | Map either element of an 'Either'.
+either'                 :: (a -> c) -> (b -> d) -> Either a b -> Either c d
+either' fl _  (Left a)  = Left  $ fl a
+either' _  fr (Right b) = Right $ fr b

@@ -148,7 +148,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
                       tryCreateDirectory $ dir </> gdir
                       if not created
                          then failDoc
-                         else do d' <- addLegend dir gdir d
+                         else do d' <- addLegend dir gdir (graphProps p) d
                                  elems <- multiElems pp $ content d'
                                  case elems of
                                    Just es -> do let es' = htmlAuthDt : es
@@ -247,13 +247,10 @@ elements _ (Definitions defs)  = return . Just . return . DefinitionList
                                                      . Plain . inlines))
                                        defs
 
-elements p (GraphImage dg)     = do el <- createGraph (filedir p)
-                                                      (graphdir p)
-                                                      (grProps p)
-                                                      (eGProps p) dg
-                                    case el of
-                                      Nothing  -> return Nothing
-                                      Just img -> elements p img
+elements p (GraphImage dg)     = elements p =<< createGraph (filedir p)
+                                                            (graphdir p)
+                                                            (grProps p)
+                                                            (eGProps p) dg
 
 -- | Concatenate the result of multiple calls to 'elements'.
 multiElems         :: PandocProcess -> [DocElement] -> IO (Maybe [Block])
