@@ -21,7 +21,8 @@ module Data.Graph.Analysis.Reporting.Pandoc
       pandocHtml,
       pandocLaTeX,
       pandocRtf,
-      pandocMarkdown
+      pandocMarkdown,
+      alsoSaveDot
     ) where
 
 -- TODO : the ability to create multiple files.
@@ -92,6 +93,8 @@ data PandocDocument = PD { -- | The Pandoc document style
                          , graphProps    :: VisProperties
                            -- | Optional size of external linked graphs.
                          , extGraphProps :: Maybe VisProperties
+                           -- | Should the Dot source code be saved as well?
+                         , keepDot       :: Bool
                          }
 
 -- | Some default sizes.  Note that all other fields of 'PandocDocument'
@@ -102,7 +105,11 @@ pd = PD { writer        = undefined
         , header        = undefined
         , graphProps    = defaultProps
         , extGraphProps = Nothing
+        , keepDot       = False
         }
+
+alsoSaveDot    :: PandocDocument -> PandocDocument
+alsoSaveDot pd = pd { keepDot = True }
 
 defaultWidth :: Double
 defaultWidth = 10
@@ -125,20 +132,14 @@ writerOptions = defaultWriterOptions { writerStandalone = True
 
 -- | Used when traversing the document structure.
 data PandocProcess = PP { secLevel :: Int
-                        , filedir  :: FilePath
-                        , graphdir :: FilePath
-                        , grProps  :: VisProperties
-                        , eGProps  :: Maybe VisProperties
+                        , visParams :: VisParams
                         }
                    deriving (Eq, Ord, Show, Read)
 
 -- | Start with a level 1 heading.
 defaultProcess :: PandocProcess
-defaultProcess = PP { secLevel = 1
-                    , graphdir = undefined
-                    , filedir  = undefined
-                    , grProps   = undefined
-                    , eGProps   = undefined
+defaultProcess = PP { secLevel  = 1
+                    , visParams = undefined
                     }
 
 -- | Create the document.
@@ -167,11 +168,13 @@ createPandoc p d = do created <- tryCreateDirectory dir
       meta = makeMeta (title d) auth dt
       -- Html output doesn't show date and auth anywhere by default.
       htmlAuthDt = htmlInfo auth dt
-      pp = defaultProcess { filedir = dir
-                          , graphdir = gdir
-                          , grProps = graphProps p
-                          , eGProps = extGraphProps p
-                          }
+      pp = defaultProcess { visParams = vp }
+      vp = VParams { rootDir      = dir
+                   , graphDir     = gdir
+                   , defaultImage = graphProps p
+                   , largeImage   = extGraphProps p
+                   , saveDot      = keepDot p
+                   }
       opts = writerOptions { writerHeader = (header p) }
       convert = writer p opts
       file = dir </> fileFront d <.> extension p
@@ -247,10 +250,7 @@ elements _ (Definitions defs)  = return . Just . return . DefinitionList
                                                      . Plain . inlines))
                                        defs
 
-elements p (GraphImage dg)     = elements p =<< createGraph (filedir p)
-                                                            (graphdir p)
-                                                            (grProps p)
-                                                            (eGProps p) dg
+elements p (GraphImage dg)     = elements p =<< createGraph (visParams p) dg
 
 -- | Concatenate the result of multiple calls to 'elements'.
 multiElems         :: PandocProcess -> [DocElement] -> IO (Maybe [Block])

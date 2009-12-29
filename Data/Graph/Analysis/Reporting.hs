@@ -17,6 +17,7 @@ module Data.Graph.Analysis.Reporting
       DocInline(..),
       GraphSize(..),
       DocGraph(..),
+      VisParams(..),
       VisProperties(..),
       -- * Helper functions
       -- $utilities
@@ -37,7 +38,7 @@ import Control.Exception.Extensible(SomeException(..), tryJust)
 import System.Directory(createDirectoryIfMissing)
 import System.FilePath((</>), (<.>))
 import System.Locale(defaultTimeLocale)
-import Control.Monad(liftM)
+import Control.Monad(liftM, when)
 
 -- -----------------------------------------------------------------------------
 
@@ -113,6 +114,23 @@ data DocGraph = DG {  -- | What name to provide the image file
                    }
               deriving (Eq, Ord, Show, Read)
 
+-- | Defines the parameters used for creating visualisations of
+--   graphs.
+data VisParams = VParams { -- | Root directory of the document.
+                           rootDir      :: FilePath
+                           -- | Image sub-directory.
+                         , graphDir     :: FilePath
+                           -- | The default visualisation.
+                         , defaultImage :: VisProperties
+                           -- | If @'Just' vp'@, then a larger
+                           --   visualisation is linked to from the
+                           --   default one.
+                         , largeImage   :: Maybe VisProperties
+                           -- | Should the Dot source code be saved as well?
+                         , saveDot      :: Bool
+                         }
+               deriving (Eq, Ord, Show, Read)
+
 -- | A specification on how to visualise a 'DocGraph'.
 data VisProperties = VProps { size   :: GraphSize
                             , format :: GraphvizOutput
@@ -184,28 +202,39 @@ tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
 --   not 'Nothing', then the first image links to the second.  The
 --   whole result is wrapped in a 'Paragraph'.  'unDotPath' is applied
 --   to the filename in the 'DocGraph'.
-createGraph :: FilePath               -- ^ Report directory
-               -> FilePath            -- ^ Image sub-directory
-               -> VisProperties       -- ^ Graph properties
-               -> Maybe VisProperties -- ^ Larger graph properties
+createGraph :: VisParams -- ^ Visualisation parameters.
                -> DocGraph
                -> IO DocElement
-createGraph rDir gDir vp mvp dg
+createGraph params dg
   = do dl  <- graphImage' rDir gDir vp dg'
        dl' <- maybe return tryImg mvp dl
+       when (saveDot params) (graphImage rDir gDir vpD dgD >> return ())
        return $ Paragraph [dl']
   where
+    rDir = rootDir params
+    gDir = graphDir params
+    vp = defaultImage params
+    vpD = VProps { size   = DefaultSize
+                 , format = Canon
+                 }
+    mvp = largeImage params
     dg' = dg { imageFile = unDotPath $ imageFile dg }
-    dgL = checkFilename vp mvp dg'
+    dgL = checkLargeFilename vp mvp dg'
+    dgD = checkFilename vp vpD "dot" dg'
     tryImg vp' di = liftM (either (const di) (DocLink di))
                    $ graphImage rDir gDir vp' dgL
 
 -- | If both output formats are the same, then the larger image needs
 --   a different filename.
-checkFilename :: VisProperties -> Maybe VisProperties -> DocGraph -> DocGraph
-checkFilename _   Nothing    dg = dg
-checkFilename vp1 (Just vp2) dg
-  | format vp1 == format vp2 = dg { imageFile = imageFile dg ++ "-large" }
+checkLargeFilename :: VisProperties -> Maybe VisProperties
+                      -> DocGraph -> DocGraph
+checkLargeFilename _   Nothing    dg = dg
+checkLargeFilename vp1 (Just vp2) dg = checkFilename vp1 vp2 "large" dg
+
+checkFilename :: VisProperties -> VisProperties -> String
+                 -> DocGraph -> DocGraph
+checkFilename vp1 vp2 s dg
+  | format vp1 == format vp2 = dg { imageFile = imageFile dg ++ '-' : s }
   | otherwise                = dg
 
 graphImage :: FilePath -> FilePath -> VisProperties -> DocGraph
