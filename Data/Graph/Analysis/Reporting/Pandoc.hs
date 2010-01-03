@@ -48,7 +48,6 @@ import System.FilePath((</>), (<.>))
 pandocHtml :: PandocDocument
 pandocHtml = pd { writer        = writeHtmlString
                 , extension     = "html"
-                , header        = "" -- Header will be included
                 , extGraphProps = Just VProps { size   = DefaultSize
                                               , format = Svg
                                               }
@@ -57,7 +56,6 @@ pandocHtml = pd { writer        = writeHtmlString
 pandocLaTeX :: PandocDocument
 pandocLaTeX = pd { writer     = writeLaTeX
                  , extension  = "tex"
-                 , header     = defaultLaTeXHeader
                  -- 4.5" should be less than \textwidth in LaTeX.
                  , graphProps = defaultProps { size = createSize 4.5 }
                  }
@@ -65,13 +63,11 @@ pandocLaTeX = pd { writer     = writeLaTeX
 pandocRtf :: PandocDocument
 pandocRtf = pd { writer    = writeRTF
                , extension = "rtf"
-               , header    = defaultRTFHeader
                }
 
 pandocMarkdown :: PandocDocument
 pandocMarkdown = pd { writer = writeMarkdown
                     , extension = "text"
-                    , header = ""
                     }
 
 -- -----------------------------------------------------------------------------
@@ -86,8 +82,6 @@ data PandocDocument = PD { -- | The Pandoc document style
                            writer        :: WriterOptions -> Pandoc -> String
                            -- | The file extension used
                          , extension     :: FilePath
-                           -- | The Pandoc header to use
-                         , header        :: String
                            -- | Size of graphs to be produced.
                          , graphProps    :: VisProperties
                            -- | Optional size of external linked graphs.
@@ -101,7 +95,6 @@ data PandocDocument = PD { -- | The Pandoc document style
 pd :: PandocDocument
 pd = PD { writer        = undefined
         , extension     = undefined
-        , header        = undefined
         , graphProps    = defaultProps
         , extGraphProps = Nothing
         , keepDot       = False
@@ -175,8 +168,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
                    , largeImage   = extGraphProps p
                    , saveDot      = keepDot p
                    }
-      opts = writerOptions { writerHeader = (header p) }
-      convert = writer p opts
+      convert = writer p writerOptions
       file = dir </> fileFront d <.> extension p
       tryWrite :: String -> IO (Either SomeException ())
       tryWrite = try . writeFile file
@@ -190,8 +182,8 @@ createPandoc p d = do created <- tryCreateDirectory dir
  -}
 
 -- | The meta information
-makeMeta     :: DocInline -> String -> String -> Meta
-makeMeta t a = Meta (inlines t) [a]
+makeMeta         :: DocInline -> String -> String -> Meta
+makeMeta tle a t = Meta (inlines tle) [[Str a]] [Str t]
 
 -- | Html output doesn't show the author and date; use this to print it.
 htmlInfo         :: String -> String -> Block
