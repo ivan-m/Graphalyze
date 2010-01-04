@@ -30,7 +30,8 @@ module Data.Graph.Analysis
       lengthAnalysis,
       classifyRoots,
       unaccessibleNodes,
-      interiorChains
+      interiorChains,
+      collapseAndUpdate
     ) where
 
 import Data.Graph.Analysis.Internal
@@ -42,10 +43,12 @@ import Data.Graph.Analysis.Reporting
 
 import Data.Graph.Inductive.Graph
 
-import Data.Maybe(mapMaybe)
+import Data.List(find)
+import Data.Maybe(mapMaybe, maybe)
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.Set(Set)
+import Control.Arrow(first)
 
 import Data.Version(showVersion)
 import qualified Paths_Graphalyze as Paths(version)
@@ -165,3 +168,21 @@ interiorChains gd = filter (not . interiorRoot) chains
       rts = wantedRoots gd
       interiorRoot = any (`elem` rts) . tail
 
+-- | As with 'collapseAndReplace', but also update the
+--   'wantedRootNodes' to contain the possibly compressed nodes.
+--   Since the datums they refer to may no longer exist (as they are
+--   compressed), 'unusedRelationships' is set to @[]@.
+collapseAndUpdate       :: (Ord n) => [AGr n e -> [(NGroup, n)]]
+                           -> GraphData n e -> GraphData n e
+collapseAndUpdate fs gd = gd { graph = gr'
+                             , wantedRootNodes = S.toList $ S.map replace rs
+                             , unusedRelationships = []
+                             }
+  where
+    gr = graph gd
+    (gr', reps) = collapseAndReplace' fs gr
+    lns' = mkNodeMap $ labNodes gr'
+    reps' = map (first S.fromList) reps
+    rs = S.fromList $ wantedRootNodes gd
+    replace r = maybe r ((M.!) lns' . snd)
+                $ find (S.member r . fst) reps'

@@ -24,7 +24,8 @@ module Data.Graph.Analysis.Algorithms.Clustering
       CNodes,
       collapseGraph,
       collapseGraphBy,
-      collapseGraphBy',
+      collapseAndReplace,
+      collapseAndReplace',
       trivialCollapse,
     ) where
 
@@ -37,9 +38,10 @@ import Data.Graph.Inductive.Graph
 
 import Data.List(foldl', tails, delete, intersect)
 import Data.Function(on)
+import Data.Maybe(fromJust)
 import qualified Data.Set.BKTree as BK
 import Data.Set.BKTree(BKTree, Metric(..))
-import Control.Arrow(first, second)
+import Control.Arrow(first, second, (***))
 import System.Random(RandomGen, randomR)
 
 -- -----------------------------------------------------------------------------
@@ -295,24 +297,32 @@ collapseGraph = collapseGraphBy interestingParts
 -- | Use the given functions to determine which nodes to collapse.
 collapseGraphBy    :: (DynGraph gr) => [gr (CNodes a) b -> [NGroup]]
                       -> gr a b -> gr (CNodes a) b
-collapseGraphBy fs = collapseGr fs'
+collapseGraphBy fs = fst . collapseGr fs'
     where
       fs' = map (map (flip (,) Nothing) .) fs
 
 -- | Use the given functions to determine which nodes to collapse,
 --   with a new label to represent the collapsed nodes.
-collapseGraphBy'    :: (DynGraph gr) => [gr a b -> [(NGroup, a)]]
-                       -> gr a b -> gr a b
-collapseGraphBy' fs = unCollapse . collapseGr fs'
+collapseAndReplace    :: (DynGraph gr) => [gr a b -> [(NGroup, a)]]
+                         -> gr a b -> gr a b
+collapseAndReplace fs = fst . collapseAndReplace' fs
+
+-- | As with 'collapseAndReplace', but also return the
+--   @('NGroup', a)@'s calculated with the functions provided.
+collapseAndReplace'    :: (DynGraph gr) => [gr a b -> [(NGroup, a)]]
+                          -> gr a b -> (gr a b, [(NGroup, a)])
+collapseAndReplace' fs = (unCollapse *** strip) . collapseGr fs'
     where
-      -- convert gr a b -> [(NGroup a)] to
+      -- convert gr a b -> [(NGroup, a)] to
       -- gr (CNodes a) b -> [(NGroup, Maybe a)]
-      fs' = map ((.nmap head) . (map (second Just) .)) fs
+      fs' = map ((. nmap head) . (map (second Just) .)) fs
+      -- Strip the Maybes
+      strip = map (second fromJust)
 
 -- | Collapse the graph.
 collapseGr      :: (DynGraph gr) => [gr (CNodes a) b -> [(NGroup, Maybe a)]]
-                   -> gr a b -> gr (CNodes a) b
-collapseGr fs g = foldl' collapseAllBy (makeCollapsible g) fs
+                   -> gr a b -> (gr (CNodes a) b, [(NGroup, Maybe a)])
+collapseGr fs g = foldl' collapseAllBy (makeCollapsible g, []) fs
 
 -- | Return @'True'@ if the collapsed graph is either a singleton node
 --   or else isomorphic to the original graph (i.e. not collapsed at all).
@@ -350,16 +360,17 @@ collapse g n1 n2 = if n1 == n2
       c' = (p,n1,l1++l2,s)
 
 -- | Collapse the list of nodes down to one node.
-collapseAll               :: (DynGraph gr) => gr (CNodes a) b
-                             -> (NGroup, Maybe a)
+collapseAll               :: (DynGraph gr) => (NGroup, Maybe a)
                              -> gr (CNodes a) b
-collapseAll g ([],_)      = g -- These two cases
-collapseAll g ([_],_)     = g -- shouldn't occur.
-collapseAll g ((n:ns),ma) = adj $ foldl' collapser g ns
+                             -> gr (CNodes a) b
+collapseAll ([],_)      g = g -- These two cases
+collapseAll ([_],_)     g = g -- shouldn't occur.
+collapseAll ((n:ns),ma) g = adj $ foldl' collapser g ns
     where
       adj = maybe id (adjustLabel n) ma
       collapser g' = collapse g' n
 
+-- | Replace the label of the provided node with @[a]@.
 adjustLabel       :: (DynGraph gr) => Node -> a
                      -> gr (CNodes a) b -> gr (CNodes a) b
 adjustLabel n a g = c & g'
@@ -368,12 +379,13 @@ adjustLabel n a g = c & g'
       c = (p,n,[a],s)
 
 -- | Collapse all results of the given function.
-collapseAllBy     :: (DynGraph gr) => gr (CNodes a) b
+collapseAllBy     :: (DynGraph gr) => (gr (CNodes a) b, [(NGroup, Maybe a)])
                      -> (gr (CNodes a) b -> [(NGroup, Maybe a)])
-                     -> gr (CNodes a) b
-collapseAllBy g f = case (filter (not . single . fst) $ f g) of
+                     -> (gr (CNodes a) b, [(NGroup, Maybe a)])
+collapseAllBy g f = case (filter (not . single . fst) $ f (fst g)) of
                       []     -> g
                              -- We re-evaluate the function in case
                              -- the original results used nodes that
                              -- have been collapsed down.
-                      (nsr:_) -> collapseAllBy (collapseAll g nsr) f
+                      (nsr:_) -> second (nsr :)
+                                 $ collapseAllBy (first (collapseAll nsr) g) f
