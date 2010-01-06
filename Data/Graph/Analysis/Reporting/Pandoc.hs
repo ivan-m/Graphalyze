@@ -48,6 +48,7 @@ import System.FilePath((</>), (<.>))
 pandocHtml :: PandocDocument
 pandocHtml = pd { writer        = writeHtmlString
                 , extension     = "html"
+                , templateName  = "html"
                 , extGraphProps = Just VProps { size   = DefaultSize
                                               , format = Svg
                                               }
@@ -56,6 +57,7 @@ pandocHtml = pd { writer        = writeHtmlString
 pandocLaTeX :: PandocDocument
 pandocLaTeX = pd { writer     = writeLaTeX
                  , extension  = "tex"
+                 , templateName = "latex"
                  -- 4.5" should be less than \textwidth in LaTeX.
                  , graphProps = defaultProps { size = createSize 4.5 }
                  }
@@ -63,11 +65,13 @@ pandocLaTeX = pd { writer     = writeLaTeX
 pandocRtf :: PandocDocument
 pandocRtf = pd { writer    = writeRTF
                , extension = "rtf"
+               , templateName = "rtf"
                }
 
 pandocMarkdown :: PandocDocument
 pandocMarkdown = pd { writer = writeMarkdown
                     , extension = "text"
+                    , templateName = "markdown"
                     }
 
 -- -----------------------------------------------------------------------------
@@ -82,6 +86,8 @@ data PandocDocument = PD { -- | The Pandoc document style
                            writer        :: WriterOptions -> Pandoc -> String
                            -- | The file extension used
                          , extension     :: FilePath
+                           -- | Which template to get.
+                         , templateName  :: String
                            -- | Size of graphs to be produced.
                          , graphProps    :: VisProperties
                            -- | Optional size of external linked graphs.
@@ -95,6 +101,7 @@ data PandocDocument = PD { -- | The Pandoc document style
 pd :: PandocDocument
 pd = PD { writer        = undefined
         , extension     = undefined
+        , templateName  = undefined
         , graphProps    = defaultProps
         , extGraphProps = Nothing
         , keepDot       = False
@@ -137,7 +144,8 @@ defaultProcess = PP { secLevel  = 1
 
 -- | Create the document.
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
-createPandoc p d = do created <- tryCreateDirectory dir
+createPandoc p d = do Right template <- getDefaultTemplate (templateName p)
+                      created <- tryCreateDirectory dir
                       -- If the first one fails, so will this one.
                       tryCreateDirectory $ dir </> gdir
                       if not created
@@ -147,7 +155,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
                                  case elems of
                                    Just es -> do let es' = htmlAuthDt : es
                                                      pnd = Pandoc meta es'
-                                                     doc = convert pnd
+                                                     doc = convert template pnd
                                                  wr <- tryWrite doc
                                                  case wr of
                                                    (Right _) -> success
@@ -168,7 +176,7 @@ createPandoc p d = do created <- tryCreateDirectory dir
                    , largeImage   = extGraphProps p
                    , saveDot      = keepDot p
                    }
-      convert = writer p writerOptions
+      convert t = writer p (writerOptions {writerTemplate = t})
       file = dir </> fileFront d <.> extension p
       tryWrite :: String -> IO (Either SomeException ())
       tryWrite = try . writeFile file
