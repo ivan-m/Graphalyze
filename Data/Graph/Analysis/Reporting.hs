@@ -35,7 +35,7 @@ import Data.GraphViz
 import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
 import Control.Exception.Extensible(SomeException(..), tryJust)
 import System.Directory(createDirectoryIfMissing)
-import System.FilePath((</>))
+import System.FilePath((</>), makeRelative)
 import System.Locale(defaultTimeLocale)
 import Control.Monad(liftM, when)
 
@@ -238,13 +238,14 @@ checkFilename vp1 vp2 s dg
 
 graphImage :: FilePath -> FilePath -> VisProperties -> DocGraph
               -> IO (Either DocInline Location)
-graphImage rDir gDir vp dg = liftM (either' Text File)
+graphImage rDir gDir vp dg = liftM (either' Text (File . fixPath))
                              $ addExtension (runGraphviz dot)
                                             (format vp)
                                             filename
   where
     dot = setSize vp $ dotGraph dg
     filename = rDir </> gDir </> imageFile dg
+    fixPath = makeRelative rDir
 
 graphImage' :: FilePath -> FilePath -> VisProperties -> DocGraph
                -> IO DocInline
