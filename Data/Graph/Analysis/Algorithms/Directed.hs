@@ -25,6 +25,7 @@ module Data.Graph.Analysis.Algorithms.Directed
       coreOf,
       -- * Clustering
       levelGraph,
+      levelGraphFrom,
       -- * Node accessibility
       accessibleFrom,
       accessibleFrom',
@@ -42,6 +43,7 @@ import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.Query.BFS(esp)
 
 import Data.List(minimumBy, unfoldr)
+import Data.Maybe(fromMaybe)
 import Data.Function(on)
 import qualified Data.Map as M
 import Data.Map(Map)
@@ -172,23 +174,33 @@ coreOf = fixPointGraphs stripEnds
    from a root node.  Root nodes are in the cluster labelled "0",
    nodes in level "n" are at least /n/ edges away from a root node.
 -}
-levelGraph   :: (Ord a) => (DynGraph g) => g a b -> g (GenCluster a) b
-levelGraph g = gmap addLbl g
+levelGraph   :: (Ord a, DynGraph g) => g a b -> g (GenCluster a) b
+levelGraph g = levelGraphFrom (rootsOf' g) g
+
+-- | As with 'levelGraph' but provide a custom grouping of 'Node's to
+--   consider as the \"roots\".
+levelGraphFrom      :: (Ord a, DynGraph g) => NGroup -> g a b
+                       -> g (GenCluster a) b
+levelGraphFrom rs g = gmap addLbl g
     where
-      lvls = zip [0..] . map S.toList $ graphLevels g
+      minLevel = 0
+      lvls = zip [minLevel..] . map S.toList $ graphLevels rs g
       lvMap = M.fromList
               $ concatMap (\(l,ns) -> map (flip (,) l) ns) lvls
-      mkLbl n l = GC { clust = lvMap M.! n
+      mkLbl n l = GC { clust = getLevel n
                      , nLbl  = l
                      }
 
       addLbl (p,n,l,s) = (p, n, mkLbl n l, s)
 
+      -- Have to consider unaccessible nodes.
+      getLevel n = fromMaybe (pred minLevel) $ n `M.lookup` lvMap
+
 type NSet = Set Node
 
 -- | Obtain the levels in the graph.
-graphLevels :: (Graph g) => g a b -> [NSet]
-graphLevels = ap graphLevels' (S.fromList . rootsOf')
+graphLevels :: (Graph g) => NGroup -> g a b -> [NSet]
+graphLevels = flip graphLevels' . S.fromList
 
 graphLevels'   :: (Graph g) => g a b -> NSet -> [NSet]
 graphLevels' g = unfoldr getNextLevel . flip (,) g

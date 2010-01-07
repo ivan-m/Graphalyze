@@ -32,7 +32,8 @@ module Data.Graph.Analysis
       unaccessibleNodes,
       interiorChains,
       collapseAndUpdate,
-      collapseAndUpdate'
+      collapseAndUpdate',
+      levelGraphFromRoot
     ) where
 
 import Data.Graph.Analysis.Internal
@@ -198,3 +199,9 @@ collapseAndUpdate' fs gd = (gd', repLookup)
     nlLookup = M.fromList $ labNodes gr
     getLs = mapMaybe (flip M.lookup nlLookup)
     repLookup = M.fromList . spreadOut $ map (first getLs) reps
+
+-- | As with 'levelGraph', but use the expected roots rather than the
+--   actual roots.
+levelGraphFromRoot    :: (Ord n) => GraphData n e
+                         -> GraphData (GenCluster n) e
+levelGraphFromRoot gd = updateGraph (levelGraphFrom (wantedRootNodes gd)) gd
