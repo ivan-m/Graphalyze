@@ -26,6 +26,7 @@ module Data.Graph.Analysis.Algorithms.Directed
       -- * Clustering
       levelGraph,
       levelGraphFrom,
+      minLevel,
       -- * Node accessibility
       accessibleFrom,
       accessibleFrom',
@@ -171,8 +172,9 @@ coreOf = fixPointGraphs stripEnds
 
 {- |
    Cluster the nodes in the graph based upon how far away they are
-   from a root node.  Root nodes are in the cluster labelled "0",
-   nodes in level "n" are at least /n/ edges away from a root node.
+   from a root node.  Root nodes are in the cluster labelled 'minLevel',
+   nodes in level \"n\" (with @n > minLevel@) are at least /n/ edges away
+   from a root node.
 -}
 levelGraph   :: (Ord a, DynGraph g) => g a b -> g (GenCluster a) b
 levelGraph g = levelGraphFrom (rootsOf' g) g
@@ -183,7 +185,6 @@ levelGraphFrom      :: (Ord a, DynGraph g) => NGroup -> g a b
                        -> g (GenCluster a) b
 levelGraphFrom rs g = gmap addLbl g
     where
-      minLevel = 0
       lvls = zip [minLevel..] . map S.toList $ graphLevels rs g
       lvMap = M.fromList
               $ concatMap (\(l,ns) -> map (flip (,) l) ns) lvls
@@ -195,6 +196,12 @@ levelGraphFrom rs g = gmap addLbl g
 
       -- Have to consider unaccessible nodes.
       getLevel n = fromMaybe (pred minLevel) $ n `M.lookup` lvMap
+
+-- | The level of the nodes in the 'NGroup' provided to
+--   'levelGraphFrom' (or the root nodes for 'levelGraph').  A level
+--   less than this indicates that the node is not accessible.
+minLevel :: Int
+minLevel = 0
 
 type NSet = Set Node
 
