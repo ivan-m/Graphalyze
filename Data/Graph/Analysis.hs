@@ -158,8 +158,8 @@ inaccessibleNodes gd = allNs `S.difference` reachableNs
       -- We can't use accessibleOnlyFrom' on notWanted from
       -- classifyRoots, as there might be nodes that are roots but not
       -- detectable (e.g. a loop).
-      allNs = S.fromList $ applyAlg nodes  gd
-      rs = S.fromList $ applyAlg rootsOf' gd
+      allNs = S.fromList $ applyAlg nodes gd
+      rs = S.fromList $ wantedRootNodes gd
       reachableNs = applyAlg accessibleFrom' gd rs
 
 -- | Only return those chains (see 'chainsIn') where the non-initial
