@@ -44,6 +44,11 @@ applyBoth f = f *** f
 mkNodeMap :: (Ord a) => [LNode a] -> Map a Node
 mkNodeMap = M.fromList . map swap
 
+spreadOut :: [([a], b)] -> [(a,b)]
+spreadOut = concatMap spread
+  where
+    spread (as, b) = map (flip (,) b) as
+
 -- -----------------------------------------------------------------------------
 -- Items re-exported in Utils (needed by Types, so defined here to
 -- avoid cycles).

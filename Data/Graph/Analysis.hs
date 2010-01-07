@@ -31,7 +31,8 @@ module Data.Graph.Analysis
       classifyRoots,
       unaccessibleNodes,
       interiorChains,
-      collapseAndUpdate
+      collapseAndUpdate,
+      collapseAndUpdate'
     ) where
 
 import Data.Graph.Analysis.Internal
@@ -46,6 +47,7 @@ import Data.Graph.Inductive.Graph
 import Data.List(find)
 import Data.Maybe(mapMaybe, maybe)
 import qualified Data.Map as M
+import Data.Map(Map)
 import qualified Data.Set as S
 import Data.Set(Set)
 import Control.Arrow(first)
@@ -172,12 +174,15 @@ interiorChains gd = filter (not . interiorRoot) chains
 --   'wantedRootNodes' to contain the possibly compressed nodes.
 --   Since the datums they refer to may no longer exist (as they are
 --   compressed), 'unusedRelationships' is set to @[]@.
-collapseAndUpdate       :: (Ord n) => [AGr n e -> [(NGroup, n)]]
-                           -> GraphData n e -> GraphData n e
-collapseAndUpdate fs gd = gd { graph = gr'
-                             , wantedRootNodes = S.toList $ S.map replace rs
-                             , unusedRelationships = []
-                             }
+collapseAndUpdate    :: (Ord n) => [AGr n e -> [(NGroup, n)]]
+                        -> GraphData n e -> GraphData n e
+collapseAndUpdate fs = fst . collapseAndUpdate' fs
+
+-- | As with 'collapseAndUpdate', but also includes a lookup 'Map'
+--   from the old label to the new.
+collapseAndUpdate'       :: (Ord n) => [AGr n e -> [(NGroup, n)]]
+                            -> GraphData n e -> (GraphData n e, Map n n)
+collapseAndUpdate' fs gd = (gd', repLookup)
   where
     gr = graph gd
     (gr', reps) = collapseAndReplace' fs gr
@@ -186,3 +191,10 @@ collapseAndUpdate fs gd = gd { graph = gr'
     rs = S.fromList $ wantedRootNodes gd
     replace r = maybe r ((M.!) lns' . snd)
                 $ find (S.member r . fst) reps'
+    gd' = gd { graph = gr'
+             , wantedRootNodes = S.toList $ S.map replace rs
+             , unusedRelationships = []
+             }
+    nlLookup = M.fromList $ labNodes gr
+    getLs = mapMaybe (flip M.lookup nlLookup)
+    repLookup = M.fromList . spreadOut $ map (first getLs) reps
