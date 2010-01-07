@@ -29,7 +29,7 @@ module Data.Graph.Analysis
       -- $analfuncts
       lengthAnalysis,
       classifyRoots,
-      unaccessibleNodes,
+      inaccessibleNodes,
       interiorChains,
       collapseAndUpdate,
       collapseAndUpdate',
@@ -152,8 +152,8 @@ classifyRoots gd = (areWanted, notRoots, notWanted)
 
 -- | Find the nodes that are not reachable from the expected roots
 --   (i.e. those in 'wantedRootNodes').
-unaccessibleNodes    :: GraphData n e -> Set Node
-unaccessibleNodes gd = allNs `S.difference` reachableNs
+inaccessibleNodes    :: GraphData n e -> Set Node
+inaccessibleNodes gd = allNs `S.difference` reachableNs
     where
       -- We can't use accessibleOnlyFrom' on notWanted from
       -- classifyRoots, as there might be nodes that are roots but not
