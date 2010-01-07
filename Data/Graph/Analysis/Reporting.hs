@@ -205,9 +205,9 @@ createGraph :: VisParams -- ^ Visualisation parameters.
                -> DocGraph
                -> IO DocElement
 createGraph params dg
-  = do dl  <- graphImage' rDir gDir vp dg'
+  = do when (saveDot params) (graphImage rDir gDir vpD dgD >> return ())
+       dl  <- graphImage' rDir gDir vp dg'
        dl' <- maybe return tryImg mvp dl
-       when (saveDot params) (graphImage rDir gDir vpD dgD >> return ())
        return $ Paragraph [dl']
   where
     rDir = rootDir params
