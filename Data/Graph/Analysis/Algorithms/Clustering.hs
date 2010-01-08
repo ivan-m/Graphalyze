@@ -281,6 +281,10 @@ nbrCluster g
 
    It may be possible to extend this to a clustering algorithm by
    collapsing low density regions into high density regions.
+
+   If providing custom collapsing functions, you should ensure that
+   for each function, it is not possible to have a recursive situation
+   where a collapsed node keeps getting collapsed to itself.
  -}
 
 -- | A collapsed node contains a list of nodes that it represents.
@@ -363,12 +367,16 @@ collapse g n1 n2 = if n1 == n2
 collapseAll               :: (DynGraph gr) => (NGroup, Maybe a)
                              -> gr (CNodes a) b
                              -> gr (CNodes a) b
-collapseAll ([],_)      g = g -- These two cases
-collapseAll ([_],_)     g = g -- shouldn't occur.
-collapseAll ((n:ns),ma) g = adj $ foldl' collapser g ns
+collapseAll ([],_)      g = g -- This case shouldn't occur
+collapseAll ([n],ma)    g = maybeAdjustLabel n ma g
+collapseAll ((n:ns),ma) g = foldl' collapser g' ns
     where
-      adj = maybe id (adjustLabel n) ma
-      collapser g' = collapse g' n
+      g' = maybeAdjustLabel n ma g
+      collapser = flip collapse n
+
+maybeAdjustLabel   :: (DynGraph gr) => Node -> Maybe a -> gr (CNodes a) b
+                      -> gr (CNodes a) b
+maybeAdjustLabel n = maybe id (adjustLabel n)
 
 -- | Replace the label of the provided node with @[a]@.
 adjustLabel       :: (DynGraph gr) => Node -> a
@@ -382,7 +390,7 @@ adjustLabel n a g = c & g'
 collapseAllBy     :: (DynGraph gr) => (gr (CNodes a) b, [(NGroup, Maybe a)])
                      -> (gr (CNodes a) b -> [(NGroup, Maybe a)])
                      -> (gr (CNodes a) b, [(NGroup, Maybe a)])
-collapseAllBy g f = case (filter (not . single . fst) $ f (fst g)) of
+collapseAllBy g f = case (filter (not . null . fst) $ f (fst g)) of
                       []     -> g
                              -- We re-evaluate the function in case
                              -- the original results used nodes that
