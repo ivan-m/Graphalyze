@@ -222,8 +222,8 @@ getNextLevel (ns,g)
     where
       g' = delNodes (S.toList ns) g
       ns' = flip S.difference ns
-            . S.unions . S.toList
-            $ S.map getSuc ns
+            . S.unions . map getSuc
+            $ S.toList ns
       getSuc = S.fromList . suc g
 
 -- -----------------------------------------------------------------------------

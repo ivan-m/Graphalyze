@@ -158,7 +158,7 @@ compact' :: (DynGraph gr) => gr a b -> gr a Int
 compact' = emap length . compact
 
 -- | Compact the graph by adjoining identical duplicate edges.
-compactSame :: (Ord b) => (DynGraph gr) => gr a b -> gr a (Int,b)
+compactSame :: (Ord b, DynGraph gr) => gr a b -> gr a (Int,b)
 compactSame = gmap cmpct
     where
       cEs = map toAdj . group . sort

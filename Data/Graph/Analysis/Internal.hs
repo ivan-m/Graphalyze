@@ -41,6 +41,7 @@ swap (a,b) = (b,a)
 applyBoth :: (a -> b) -> (a,a) -> (b,b)
 applyBoth f = f *** f
 
+-- | Create a lookup 'Map' to determine which 'Node' has a specific label.
 mkNodeMap :: (Ord a) => [LNode a] -> Map a Node
 mkNodeMap = M.fromList . map swap
 
