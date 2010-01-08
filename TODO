@@ -12,3 +12,7 @@ TODO for Graphalyze
 
 * Write a README
 
+* For Reporting, have a Document -> IO Document function that
+  generates all the visualisations and replaces all GraphImage
+  DocElement values with DocImage, etc. (and then the Document ->
+  Pandoc conversion can be pure).
