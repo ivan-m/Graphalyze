@@ -147,7 +147,7 @@ createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
 createPandoc p d = do Right template <- getDefaultTemplate (templateName p)
                       created <- tryCreateDirectory dir
                       -- If the first one fails, so will this one.
-                      tryCreateDirectory $ dir </> gdir
+                      _ <- tryCreateDirectory $ dir </> gdir
                       if not created
                          then failDoc
                          else do d' <- addLegend dir gdir (graphProps p) d
