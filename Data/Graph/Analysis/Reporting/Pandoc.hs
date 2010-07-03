@@ -144,7 +144,7 @@ defaultProcess = PP { secLevel  = 1
 
 -- | Create the document.
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
-createPandoc p d = do Right template <- getDefaultTemplate (templateName p)
+createPandoc p d = do Right template <- getDefaultTemplate Nothing (templateName p)
                       created <- tryCreateDirectory dir
                       -- If the first one fails, so will this one.
                       _ <- tryCreateDirectory $ dir </> gdir
