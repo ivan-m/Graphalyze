@@ -267,7 +267,7 @@ setSize vp g = case size vp of
 -- | Using a 6:4 ratio, create the given 'Point' representing
 --   width,height from the width.
 createSize   :: Double -> GraphSize
-createSize w = GivenSize $ PointD w (w*4/6)
+createSize w = GivenSize $ Point w (w*4/6)
 
 -- | Replace all @.@ with @-@ in the given 'FilePath', since some output
 --   formats (e.g. LaTeX) don't like extraneous @.@'s in the filename.

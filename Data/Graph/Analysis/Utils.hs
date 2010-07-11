@@ -68,6 +68,8 @@ import Data.Graph.Analysis.Types
 
 import Data.Graph.Inductive.Graph
 import Data.GraphViz( dotizeGraph
+                    , GraphvizParams(isDirected)
+                    , nonClusteredParams
                     , Attribute(..)
                     , Pos(..)
                     , Point(..))
@@ -186,14 +188,14 @@ delLNodes = delNodes . map fst
 --   labels.  The 'Bool' parameter denotes if the graph is directed or
 --   not.
 toPosGraph     :: (DynGraph gr, Ord b) => Bool -> gr a b -> gr (PosLabel a) b
-toPosGraph dir = nlmap getPos . emap rmAttrs . dotizeGraph dir
+toPosGraph dir = nlmap getPos . emap rmAttrs . dotizeGraph params
     where
+      params = nonClusteredParams{ isDirected = dir }
       rmAttrs = snd
-      isPoint attr = case attr of
-                       Pos{} -> True
-                       _     -> False
-      getPos (n,(as,l)) = PLabel { xPos   = x
-                                 , yPos   = y
+      isPoint Pos{} = True
+      isPoint _     = False
+      getPos (n,(as,l)) = PLabel { xPos   = round x
+                                 , yPos   = round y
                                  , pnode  = n
                                  , plabel = l
                                  }

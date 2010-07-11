@@ -212,14 +212,14 @@ class (ClusterType (Cluster cl)) => ClusterLabel cl where
 class (Ord c) => ClusterType c where
     -- | Create a label for visualisation purposes with the GraphViz
     --   library.  Default is @'const' 'Nothing'@.
-    clusterID :: c -> Maybe GraphID
-    clusterID = const Nothing
+    clustID :: c -> Maybe GraphID
+    clustID = const Nothing
 
 instance ClusterType Int where
-    clusterID = Just . Int
+    clustID = Just . Int
 
 instance ClusterType String where
-    clusterID = Just . Str
+    clustID = Just . Str
 
 -- | A generic cluster-label type.
 data GenCluster a = GC { clust :: Int
