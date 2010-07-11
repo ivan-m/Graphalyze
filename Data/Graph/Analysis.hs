@@ -46,7 +46,7 @@ import Data.Graph.Analysis.Reporting
 import Data.Graph.Inductive.Graph
 
 import Data.List(find)
-import Data.Maybe(mapMaybe, maybe)
+import Data.Maybe(mapMaybe)
 import qualified Data.Map as M
 import Data.Map(Map)
 import qualified Data.Set as S
