@@ -67,17 +67,17 @@ version = showVersion Paths.version
    to analyse.  If the graph is undirected, it is better to list each
    edge once rather than both directions.
  -}
-data ImportParams n e = Params { -- | The discrete points.
-                                 dataPoints :: [n],
-                                 -- | The relationships between the points.
-                                 relationships :: [Rel n e],
-                                 -- | The expected roots of the graph.
-                                 --   If @'directed' = 'False'@, then this is ignored.
-                                 roots :: [n],
-                                 -- | 'False' if relationships are symmetric
-                                 --   (i.e. an undirected graph).
-                                 directed :: Bool
-                               }
+data ImportParams n e = ImpParams { -- | The discrete points.
+                                    dataPoints :: [n]
+                                    -- | The relationships between the points.
+                                  , relationships :: [Rel n e]
+                                    -- | The expected roots of the graph.
+                                    --   If @'directed' = 'False'@, then this is ignored.
+                                  , roots :: [n]
+                                    -- | 'False' if relationships are symmetric
+                                    --   (i.e. an undirected graph).
+                                  , directed :: Bool
+                                  }
 
 {- |
    Import data into a format suitable for analysis.  This function is
