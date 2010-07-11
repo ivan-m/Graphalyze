@@ -29,9 +29,9 @@ Library {
                          process,
                          random,
                          time,
-                         bktrees >= 0.2,
-                         fgl >= 5.4.2.2,
-                         graphviz >= 2999.8.0.0 && < 2999.9.0.0,
+                         bktrees >= 0.2 && <0.4,
+                         fgl >= 5.4.2.3 && < 5.5,
+                         graphviz >= 2999.10.0.0 && < 2999.11.0.0,
                          pandoc >= 1.5 && < 1.6
 
         Exposed-Modules:     Data.Graph.Analysis
