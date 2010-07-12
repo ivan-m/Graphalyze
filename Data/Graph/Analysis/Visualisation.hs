@@ -44,6 +44,9 @@ import Data.List(intersperse, unfoldr)
    Simple wrappers around the Haskell "Data.GraphViz" library to turn
    'GraphData's into basic 'DotGraph's for processing by the GraphViz
    suite of applications.
+
+   'blankParams' may be useful for creating initial definitions of
+   'GraphvizParams', especially for 'graphvizClusters'.
 -}
 
 -- | Convert the 'GraphData' into 'DotGraph' format.
