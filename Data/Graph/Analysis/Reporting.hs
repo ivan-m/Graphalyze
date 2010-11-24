@@ -65,7 +65,7 @@ data Document = Doc { -- | Document location
                     , author         :: String
                     , date           :: String
                       -- | Main-matter
-                    , legend         :: [(DocGraph, DocInline)]
+                    , legend         :: [(Either DocGraph DocInline, DocInline)]
                     , content        :: [DocElement]
                     }
                 deriving (Eq, Ord, Show, Read)
@@ -159,20 +159,21 @@ addLegend fp gfp vp d = do mLg <- legendToElement fp gfp vp $ legend d
                                       }
 
 legendToElement           :: FilePath -> FilePath -> VisProperties
-                             -> [(DocGraph, DocInline)]
+                             -> [(Either DocGraph DocInline, DocInline)]
                              -> IO (Maybe DocElement)
 legendToElement _  _   _  [] = return Nothing
 legendToElement fp gfp vp ls = do defs <- mapM (uncurry (legToDef fp gfp vp)) ls
                                   let df   = Definitions defs
                                   return $ Just $ Section (Text "Legend") [df]
 
-legToDef                  :: FilePath -> FilePath -> VisProperties
-                             -> DocGraph -> DocInline
-                             -> IO (DocInline, DocInline)
-legToDef fp gfp vp dg def = liftM (flip (,) def)
-                            $ graphImage' fp gfp vp' dg
+legToDef :: FilePath -> FilePath -> VisProperties
+            -> Either DocGraph DocInline -> DocInline
+            -> IO (DocInline, DocInline)
+legToDef fp gfp vp (Left dg) def = liftM ((,) def)
+                                   $ graphImage' fp gfp vp' dg
   where
     vp' = vp { size = DefaultSize }
+legToDef _ _ _ (Right di) def = return (def,di)
 
 -- | Return today's date as a string, e.g. \"Monday 1 January, 2000\".
 --   This arbitrary format is chosen as there doesn't seem to be a way
