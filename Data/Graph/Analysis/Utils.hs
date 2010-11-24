@@ -194,16 +194,15 @@ toPosGraph dir = nlmap getPos . emap rmAttrs . dotizeGraph params
       rmAttrs = snd
       isPoint Pos{} = True
       isPoint _     = False
-      getPos (n,(as,l)) = PLabel { xPos   = round x
-                                 , yPos   = round y
+      getPos (n,(as,l)) = PLabel { xPos   = round $ xCoord pnt
+                                 , yPos   = round $ yCoord pnt
                                  , pnode  = n
                                  , plabel = l
                                  }
           where
-            -- Assume that positions can't be doubles.
             -- Also assuming that we're not dealing with a
             -- spline-type point.
-            (Pos (PointPos (Point x y))) = fromJust $ find isPoint as
+            (Pos (PointPos pnt)) = fromJust $ find isPoint as
 
 -- | Returns the positions of the nodes in the graph, as found using
 --   Graphviz.  The 'Bool' parameter denotes if the graph is directed
