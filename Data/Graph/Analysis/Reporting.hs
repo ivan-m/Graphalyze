@@ -35,7 +35,8 @@ import Data.GraphViz
 import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
 import Control.Exception.Extensible(SomeException(..), tryJust)
 import System.Directory(createDirectoryIfMissing)
-import System.FilePath((</>), makeRelative)
+import System.FilePath(makeRelative)
+import System.FilePath.Posix((</>))
 import System.Locale(defaultTimeLocale)
 import Control.Monad(liftM, when)
 
