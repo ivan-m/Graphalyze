@@ -32,7 +32,8 @@ Library {
                          bktrees >= 0.2 && <0.4,
                          fgl >= 5.4.2.3 && < 5.5,
                          graphviz == 2999.12.*,
-                         pandoc == 1.8.*
+                         pandoc == 1.8.*,
+                         text
 
         Exposed-Modules:     Data.Graph.Analysis
                              Data.Graph.Analysis.Types
