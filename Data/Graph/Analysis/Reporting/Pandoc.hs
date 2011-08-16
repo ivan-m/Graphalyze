@@ -195,7 +195,7 @@ makeMeta tle a t = Meta (inlines tle) [[Str a]] [Str t]
 
 -- | Html output doesn't show the author and date; use this to print it.
 htmlInfo         :: String -> String -> Block
-htmlInfo auth dt = RawHtml html
+htmlInfo auth dt = RawBlock "html" html
     where
       heading = "<h1>Document Information</h1>"
       html = unlines [heading, htmlize auth, htmlize dt]

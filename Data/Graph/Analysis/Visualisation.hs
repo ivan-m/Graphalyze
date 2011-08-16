@@ -50,14 +50,14 @@ import Data.List(intersperse, unfoldr)
 -}
 
 -- | Convert the 'GraphData' into 'DotGraph' format.
-graphviz :: (Ord cl) => GraphvizParams nl el cl l
+graphviz :: (Ord cl) => GraphvizParams Node nl el cl l
             -> GraphData nl el -> DotGraph Node
 graphviz = setDir graphToDot
 
 -- | Convert the clustered 'GraphData' into 'DotGraph' format.
 --   Cluster the nodes based upon their 'ClusterLabel' clusters.
 graphvizClusters    :: (ClusterLabel nl)
-                       => GraphvizParams nl el (Cluster nl) (NodeLabel nl)
+                       => GraphvizParams Node nl el (Cluster nl) (NodeLabel nl)
                        -> GraphData nl el -> DotGraph Node
 graphvizClusters ps = graphviz params
   where
@@ -72,8 +72,8 @@ assignCluster       :: (ClusterLabel cl) => LNode cl
 assignCluster (n,a) = C (cluster a) $ N (n, nodeLabel a)
 
 -- | A cross between 'applyDirAlg' and 'setDirectedness'.
-setDir :: (GraphvizParams nl el cl l -> AGr nl el -> a)
-          -> GraphvizParams nl el cl l -> GraphData nl el -> a
+setDir :: (GraphvizParams Node nl el cl l -> AGr nl el -> a)
+          -> GraphvizParams Node nl el cl l -> GraphData nl el -> a
 setDir f params gd = f params' (graph gd)
   where
     params' = params { isDirected = directedData gd }

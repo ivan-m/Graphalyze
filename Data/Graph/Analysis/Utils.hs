@@ -69,10 +69,10 @@ import Data.Graph.Analysis.Types
 import Data.Graph.Inductive.Graph
 import Data.GraphViz( dotizeGraph
                     , GraphvizParams(isDirected)
-                    , nonClusteredParams
-                    , Attribute(..)
-                    , Pos(..)
-                    , Point(..))
+                    , nonClusteredParams)
+import Data.GraphViz.Attributes.Complete( Attribute(..)
+                                        , Pos(..)
+                                        , Point(..))
 
 import Data.List(nub, nubBy, (\\), find, sort, sortBy, group, groupBy)
 import Data.Maybe(fromJust)

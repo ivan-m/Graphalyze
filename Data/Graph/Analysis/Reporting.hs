@@ -31,6 +31,8 @@ module Data.Graph.Analysis.Reporting
 
 import Data.Graph.Inductive(Node)
 import Data.GraphViz
+import Data.GraphViz.Attributes.Complete(Attribute(Size), Point(..), createPoint)
+import Data.GraphViz.Exception
 
 import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
 import Control.Exception.Extensible(SomeException(..), tryJust)
@@ -240,7 +242,8 @@ checkFilename vp1 vp2 s dg
 
 graphImage :: FilePath -> FilePath -> VisProperties -> DocGraph
               -> IO (Either DocInline Location)
-graphImage rDir gDir vp dg = liftM (either' Text (File . fixPath))
+graphImage rDir gDir vp dg = handle getErr
+                             . liftM (Right . File . fixPath)
                              $ addExtension (runGraphviz dot)
                                             (format vp)
                                             filename
@@ -248,6 +251,9 @@ graphImage rDir gDir vp dg = liftM (either' Text (File . fixPath))
     dot = setSize vp $ dotGraph dg
     filename = rDir </> gDir </> imageFile dg
     fixPath = makeRelative rDir
+
+    getErr :: GraphvizException -> IO (Either DocInline Location)
+    getErr = return . Left. Text . show
 
 graphImage' :: FilePath -> FilePath -> VisProperties -> DocGraph
                -> IO DocInline
