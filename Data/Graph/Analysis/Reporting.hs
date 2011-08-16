@@ -284,8 +284,3 @@ unDotPath = map replace
     where
       replace '.' = '-'
       replace c   = c
-
--- | Map either element of an 'Either'.
-either'                 :: (a -> c) -> (b -> d) -> Either a b -> Either c d
-either' fl _  (Left a)  = Left  $ fl a
-either' _  fr (Right b) = Right $ fr b
