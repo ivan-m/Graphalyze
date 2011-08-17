@@ -1,6 +1,7 @@
 {-# LANGUAGE TypeFamilies
             , FlexibleContexts
             , TypeSynonymInstances
+            , FlexibleInstances
  #-}
 
 {- |
