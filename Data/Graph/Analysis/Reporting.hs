@@ -33,12 +33,13 @@ import Data.Graph.Inductive(Node)
 import Data.GraphViz
 import Data.GraphViz.Attributes.Complete(Attribute(Size), Point(..), createPoint)
 import Data.GraphViz.Exception
+import Data.GraphViz.Commands.IO(writeDotFile)
 
 import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
 import Control.Exception.Extensible(SomeException(..), tryJust)
 import System.Directory(createDirectoryIfMissing)
 import System.FilePath(makeRelative)
-import System.FilePath.Posix((</>))
+import System.FilePath.Posix((</>), (<.>))
 import System.Locale(defaultTimeLocale)
 import Control.Monad(liftM, when)
 
@@ -205,11 +206,14 @@ tryCreateDirectory fp = do r <- tryJust (\(SomeException _) -> return ())
 --   not 'Nothing', then the first image links to the second.  The
 --   whole result is wrapped in a 'Paragraph'.  'unDotPath' is applied
 --   to the filename in the 'DocGraph'.
+--
+--   If 'saveDot' is true, then it is assumed that the 'format' isn't
+--   'Canon', 'DotOutput' or 'XDot' (because of filename clashes).
 createGraph :: VisParams -- ^ Visualisation parameters.
                -> DocGraph
                -> IO DocElement
 createGraph params dg
-  = do when (saveDot params) (graphImage rDir gDir vpD dgD >> return ())
+  = do when (saveDot params) (writeDotFile dotFP $ dotGraph dg)
        dl  <- graphImage' rDir gDir vp dg'
        dl' <- maybe return tryImg mvp dl
        return $ Paragraph [dl']
@@ -223,9 +227,10 @@ createGraph params dg
     mvp = largeImage params
     dg' = dg { imageFile = unDotPath $ imageFile dg }
     dgL = checkLargeFilename vp mvp dg'
-    dgD = checkFilename vp vpD "dot" dg'
     tryImg vp' di = liftM (either (const di) (DocLink di))
                    $ graphImage rDir gDir vp' dgL
+
+    dotFP = rDir </> gDir </> imageFile dg <.> "dot"
 
 -- | If both output formats are the same, then the larger image needs
 --   a different filename.
