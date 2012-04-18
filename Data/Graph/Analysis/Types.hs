@@ -35,7 +35,6 @@ module Data.Graph.Analysis.Types
       mapNodeType,
       -- * Clustering graphs based on their node labels.
       ClusterLabel(..),
-      ClusterType(..),
       GraphID(..),
       -- * Graph label types.
       GenCluster(..),
@@ -47,12 +46,10 @@ import Data.Graph.Analysis.Internal
 import Data.Graph.Inductive.Graph
 import Data.Graph.Inductive.PatriciaTree
 
-import Data.GraphViz.Types(GraphID(..))
+import Data.GraphViz.Types(GraphID(..), ToGraphID(..))
 
 import qualified Data.Set as S
 import Data.Set(Set)
-import qualified Data.Text.Lazy as T
-import Data.Text.Lazy(Text)
 
 -- -----------------------------------------------------------------------------
 
@@ -201,7 +198,7 @@ type LNGroup a = [LNode a]
 --   mainly used for visualization purposes, with the 'Ord' instance
 --   required for grouping.  Instances of this class are intended for
 --   use as the label type of graphs.
-class (ClusterType (Cluster cl)) => ClusterLabel cl where
+class (Ord (Cluster cl), ToGraphID (Cluster cl)) => ClusterLabel cl where
     type Cluster cl
     type NodeLabel cl
 
@@ -210,24 +207,6 @@ class (ClusterType (Cluster cl)) => ClusterLabel cl where
 
     -- | The actual label.
     nodeLabel :: cl -> NodeLabel cl
-
--- | A class used to define which types are valid for clusters.
-class (Ord c) => ClusterType c where
-    -- | Create a label for visualisation purposes with the GraphViz
-    --   library.
-    clustID :: c -> GraphID
-
-instance ClusterType Int where
-    clustID = Int
-
-instance ClusterType Double where
-    clustID = Dbl
-
-instance ClusterType Text where
-    clustID = Str
-
-instance ClusterType String where
-    clustID = clustID . T.pack
 
 -- | A generic cluster-label type.
 data GenCluster a = GC { clust :: Int

@@ -35,7 +35,7 @@ import Text.Pandoc
 import Data.List(intersperse)
 import Data.Maybe(isNothing, fromJust)
 import Control.Arrow((***))
-import Control.Exception.Extensible(SomeException, try)
+import Control.Exception(SomeException, try)
 import System.Directory(removeDirectoryRecursive)
 import System.FilePath((</>), (<.>))
 

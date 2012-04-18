@@ -62,7 +62,7 @@ graphvizClusters    :: (ClusterLabel nl)
 graphvizClusters ps = graphviz params
   where
     params = ps { clusterBy = assignCluster
-                , clusterID = clustID
+                , clusterID = toGraphID
                 }
 
 -- | A function to convert an 'LNode' to the required 'LNodeCluster'

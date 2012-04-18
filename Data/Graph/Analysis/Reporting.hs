@@ -36,7 +36,7 @@ import Data.GraphViz.Exception
 import Data.GraphViz.Commands.IO(writeDotFile)
 
 import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
-import Control.Exception.Extensible(SomeException(..), tryJust)
+import Control.Exception(SomeException(..), tryJust)
 import System.Directory(createDirectoryIfMissing)
 import System.FilePath(makeRelative)
 import System.FilePath.Posix((</>), (<.>))
@@ -221,9 +221,6 @@ createGraph params dg
     rDir = rootDir params
     gDir = graphDir params
     vp = defaultImage params
-    vpD = VProps { size   = DefaultSize
-                 , format = Canon
-                 }
     mvp = largeImage params
     dg' = dg { imageFile = unDotPath $ imageFile dg }
     dgL = checkLargeFilename vp mvp dg'
