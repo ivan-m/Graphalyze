@@ -30,7 +30,7 @@ Library {
                          time,
                          bktrees >= 0.2 && <0.4,
                          fgl >= 5.4.2.3 && < 5.5,
-                         graphviz == 2999.13.*,
+                         graphviz >= 2999.13 && < 2999.15,
                          pandoc >= 1.8 && < 1.10,
                          text
 
