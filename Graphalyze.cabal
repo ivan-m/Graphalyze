@@ -1,5 +1,5 @@
 Name:                Graphalyze
-Version:             0.13.0.0
+Version:             0.13.0.1
 Synopsis:            Graph-Theoretic Analysis library.
 Description:         A library to use graph theory to analyse the relationships
                         inherent in discrete data.
