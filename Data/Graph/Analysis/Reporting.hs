@@ -31,7 +31,7 @@ module Data.Graph.Analysis.Reporting
 
 import Data.Graph.Inductive(Node)
 import Data.GraphViz
-import Data.GraphViz.Attributes.Complete(Attribute(Size), Point(..), createPoint)
+import qualified Data.GraphViz.Attributes.Complete as AC
 import Data.GraphViz.Exception
 import Data.GraphViz.Commands.IO(writeDotFile)
 
@@ -108,7 +108,7 @@ data DocInline = Text String
 
 -- | Specify the 'DotGraph' to turn into an image, its filename (sans
 --   extension) and its caption.  The 'DotGraph' should not have a
---   'Size' set.
+--   'AC.Size' set.
 data DocGraph = DG {  -- | What name to provide the image file
                       --   (without an extension).
                      imageFile   :: FilePath
@@ -141,8 +141,8 @@ data VisProperties = VProps { size   :: GraphSize
                    deriving (Eq, Ord, Show, Read)
 
 -- | Specify the size the 'DotGraph' should be at.
-data GraphSize = GivenSize Point  -- ^ Specify the size to use.
-               | DefaultSize      -- ^ Let GraphViz choose an appropriate size.
+data GraphSize = GivenSize AC.GraphSize -- ^ Specify the size to use.
+               | DefaultSize            -- ^ Let GraphViz choose an appropriate size.
                deriving (Eq, Ord, Show, Read)
 
 -- -----------------------------------------------------------------------------
@@ -272,12 +272,12 @@ setSize vp g = case size vp of
   where
     setS s = stmts { attrStmts = sizeA s : attrStmts stmts }
     stmts = graphStatements g
-    sizeA s = GraphAttrs [Size s]
+    sizeA s = GraphAttrs [AC.Size s]
 
 -- | Using a 6:4 ratio, create the given 'Point' representing
 --   width,height from the width.
 createSize   :: Double -> GraphSize
-createSize w = GivenSize $ createPoint w (w*4/6)
+createSize w = GivenSize $ AC.GSize w (Just $ w*4/6) True
 
 -- | Replace all @.@ with @-@ in the given 'FilePath', since some output
 --   formats (e.g. LaTeX) don't like extraneous @.@'s in the filename.

@@ -61,8 +61,9 @@ graphvizClusters    :: (ClusterLabel nl)
                        -> GraphData nl el -> DotGraph Node
 graphvizClusters ps = graphviz params
   where
-    params = ps { clusterBy = assignCluster
-                , clusterID = toGraphID
+    params = ps { clusterBy    = assignCluster
+                , isDotCluster = const True
+                , clusterID    = toGraphID
                 }
 
 -- | A function to convert an 'LNode' to the required 'LNodeCluster'
