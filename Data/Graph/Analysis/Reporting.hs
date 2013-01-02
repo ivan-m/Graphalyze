@@ -141,7 +141,7 @@ data VisProperties = VProps { size   :: GraphSize
                    deriving (Eq, Ord, Show, Read)
 
 -- | Specify the size the 'DotGraph' should be at.
-data GraphSize = GivenSize AC.GraphSize -- ^ Specify the size to use.
+data GraphSize = GivenSize AC.GraphSize -- ^ Specify the maximum size to use.
                | DefaultSize            -- ^ Let GraphViz choose an appropriate size.
                deriving (Eq, Ord, Show, Read)
 
@@ -277,7 +277,7 @@ setSize vp g = case size vp of
 -- | Using a 6:4 ratio, create the given 'Point' representing
 --   width,height from the width.
 createSize   :: Double -> GraphSize
-createSize w = GivenSize $ AC.GSize w (Just $ w*4/6) True
+createSize w = GivenSize $ AC.GSize w (Just $ w*4/6) False
 
 -- | Replace all @.@ with @-@ in the given 'FilePath', since some output
 --   formats (e.g. LaTeX) don't like extraneous @.@'s in the filename.
