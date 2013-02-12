@@ -125,10 +125,10 @@ instance DocumentGenerator PandocDocument where
 
 -- | Define the 'WriterOptions' used.
 writerOptions :: WriterOptions
-writerOptions = defaultWriterOptions { writerStandalone = True
-                                     , writerTableOfContents = True
-                                     , writerNumberSections = True
-                                     }
+writerOptions = def { writerStandalone = True
+                    , writerTableOfContents = True
+                    , writerNumberSections = True
+                    }
 
 -- | Used when traversing the document structure.
 data PandocProcess = PP { secLevel :: Int
@@ -231,7 +231,7 @@ elements :: PandocProcess -> DocElement -> IO (Maybe [Block])
 
 elements p (Section lbl elems) = do let n = secLevel p
                                         p' = p { secLevel = n + 1}
-                                        sec = Header n (inlines lbl)
+                                        sec = Header n nullAttr (inlines lbl)
                                     elems' <- multiElems p' elems
                                     return (fmap (sec:) elems')
 
