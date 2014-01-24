@@ -29,15 +29,16 @@ module Data.Graph.Analysis.Reporting.Pandoc
 
 import Data.Graph.Analysis.Reporting
 
-import Data.GraphViz.Commands(GraphvizOutput(Png, Svg))
-import Text.Pandoc
+import           Data.GraphViz.Commands (GraphvizOutput (Png, Svg))
+import           Text.Pandoc
+import qualified Text.Pandoc.Shared     as P
 
-import Data.List(intersperse)
-import Data.Maybe(isNothing, fromJust)
-import Control.Arrow((***))
-import Control.Exception(SomeException, try)
-import System.Directory(removeDirectoryRecursive)
-import System.FilePath((</>), (<.>))
+import Control.Arrow     ((***))
+import Control.Exception (SomeException, try)
+import Data.List         (intersperse)
+import Data.Maybe        (fromJust, isNothing)
+import System.Directory  (removeDirectoryRecursive)
+import System.FilePath   ((<.>), (</>))
 
 -- -----------------------------------------------------------------------------
 
@@ -131,7 +132,7 @@ writerOptions = def { writerStandalone = True
                     }
 
 -- | Used when traversing the document structure.
-data PandocProcess = PP { secLevel :: Int
+data PandocProcess = PP { secLevel  :: Int
                         , visParams :: VisParams
                         }
                    deriving (Eq, Ord, Show, Read)
@@ -191,11 +192,11 @@ createPandoc p d = do Right template <- getDefaultTemplate Nothing (templateName
 
 -- | The meta information
 makeMeta         :: DocInline -> String -> String -> Meta
-makeMeta tle a t = Meta (inlines tle) [[Str a]] [Str t]
+makeMeta tle a t = P.makeMeta (inlines tle) [[Str a]] [Str t]
 
 -- | Html output doesn't show the author and date; use this to print it.
 htmlInfo         :: String -> String -> Block
-htmlInfo auth dt = RawBlock "html" html
+htmlInfo auth dt = RawBlock (Format "html") html
     where
       heading = "<h1>Document Information</h1>"
       html = unlines [heading, htmlize auth, htmlize dt]
