@@ -67,6 +67,7 @@ data GraphData n e = GraphData { -- | We use a graph type with no edge labels.
                                  --   graph.
                                  unusedRelationships :: [Rel n e]
                                }
+                     deriving (Eq, Show, Read)
 
 -- | The expected roots in the data to be analysed.
 wantedRoots    :: GraphData n e -> LNGroup n
