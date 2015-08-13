@@ -13,9 +13,12 @@ Extra-Source-Files:  TODO
 Cabal-Version:       >= 1.6
 Build-Type:          Simple
 
+Tested-With:         GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4,
+                     GHC == 7.10.2, GHC == 7.11.*
+
 Source-Repository head
-    Type:         darcs
-    Location:     http://code.haskell.org/Graphalyze
+    Type:         git
+    Location:     git://github.com/ivan-m/Graphalyze.git
 
 
 Library {
