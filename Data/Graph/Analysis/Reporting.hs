@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 {- |
    Module      : Data.Graph.Analysis.Reporting
    Description : Graphalyze Types and Classes
@@ -29,19 +31,24 @@ module Data.Graph.Analysis.Reporting
       unDotPath
     ) where
 
-import Data.Graph.Inductive(Node)
-import Data.GraphViz
+import           Data.Graph.Inductive              (Node)
+import           Data.GraphViz
 import qualified Data.GraphViz.Attributes.Complete as AC
-import Data.GraphViz.Exception
-import Data.GraphViz.Commands.IO(writeDotFile)
+import           Data.GraphViz.Commands.IO         (writeDotFile)
+import           Data.GraphViz.Exception
 
-import Data.Time(getZonedTime, zonedTimeToLocalTime, formatTime)
-import Control.Exception(SomeException(..), tryJust)
-import System.Directory(createDirectoryIfMissing)
-import System.FilePath(makeRelative)
-import System.FilePath.Posix((</>), (<.>))
-import System.Locale(defaultTimeLocale)
-import Control.Monad(liftM, when)
+import Control.Exception     (SomeException (..), tryJust)
+import Control.Monad         (liftM, when)
+import Data.Time             (formatTime, getZonedTime, zonedTimeToLocalTime)
+import System.Directory      (createDirectoryIfMissing)
+import System.FilePath       (makeRelative)
+import System.FilePath.Posix ((<.>), (</>))
+
+#if MIN_VERSION_time (1,5,0)
+import Data.Time (defaultTimeLocale)
+#else
+import System.Locale (defaultTimeLocale)
+#endif
 
 -- -----------------------------------------------------------------------------
 

@@ -20,6 +20,11 @@ Source-Repository head
     Type:         git
     Location:     git://github.com/ivan-m/Graphalyze.git
 
+Flag old-locale {
+     Description: Use old-locale and time < 1.5
+     Manual:      False
+     Default:     True
+}
 
 Library {
         Build-Depends:   base == 4.*,
@@ -27,15 +32,20 @@ Library {
                          containers,
                          directory,
                          filepath,
-                         old-locale,
                          process,
                          random,
-                         time,
                          bktrees >= 0.2 && <0.4,
                          fgl == 5.5.*,
-                         graphviz >= 2999.15 && < 2999.18,
-                         pandoc == 1.12.*,
+                         graphviz >= 2999.15 && < 2999.19,
+                         pandoc >= 1.12 && < 1.16,
                          text
+
+        if flag(old-locale) {
+           Build-Depends: time < 1.5,
+                          old-locale
+        } else {
+           Build-Depends: time == 1.5.*
+        }
 
         Exposed-Modules:     Data.Graph.Analysis
                              Data.Graph.Analysis.Types
@@ -52,5 +62,5 @@ Library {
                              Paths_Graphalyze
 
         Ghc-Options:         -Wall
-        Ghc-Prof-Options:    -prof -auto-all
+        Ghc-Prof-Options:    -prof
 }
