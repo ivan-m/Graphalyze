@@ -29,7 +29,7 @@ module Data.Graph.Analysis.Reporting.Pandoc
 
 import Data.Graph.Analysis.Reporting
 
-import           Data.GraphViz.Commands (GraphvizOutput (Png, Svg))
+import           Data.GraphViz.Commands (GraphvizOutput(Png, Svg))
 import           Text.Pandoc
 import qualified Text.Pandoc.Shared     as P
 
@@ -126,8 +126,7 @@ instance DocumentGenerator PandocDocument where
 
 -- | Define the 'WriterOptions' used.
 writerOptions :: WriterOptions
-writerOptions = def { writerStandalone = True
-                    , writerTableOfContents = True
+writerOptions = def { writerTableOfContents = True
                     , writerNumberSections = True
                     }
 
@@ -145,8 +144,7 @@ defaultProcess = PP { secLevel  = 1
 
 -- | Create the document.
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
-createPandoc p d = do Right template <- getDefaultTemplate Nothing (templateName p)
-                      created <- tryCreateDirectory dir
+createPandoc p d = do created <- tryCreateDirectory dir
                       -- If the first one fails, so will this one.
                       _ <- tryCreateDirectory $ dir </> gdir
                       if not created
@@ -156,7 +154,7 @@ createPandoc p d = do Right template <- getDefaultTemplate Nothing (templateName
                                  case elems of
                                    Just es -> do let es' = htmlAuthDt : es
                                                      pnd = Pandoc meta es'
-                                                     doc = convert template pnd
+                                                     doc = convert pnd
                                                  wr <- tryWrite doc
                                                  case wr of
                                                    (Right _) -> success
@@ -177,7 +175,7 @@ createPandoc p d = do Right template <- getDefaultTemplate Nothing (templateName
                    , largeImage   = extGraphProps p
                    , saveDot      = keepDot p
                    }
-      convert t = writer p (writerOptions {writerTemplate = t})
+      convert = writer p writerOptions
       file = dir </> fileFront d <.> extension p
       tryWrite :: String -> IO (Either SomeException ())
       tryWrite = try . writeFile file
@@ -214,8 +212,8 @@ inlines BlankSpace         = [Space]
 inlines (Grouping grp)     = concat . intersperse [Space] $ map inlines grp
 inlines (Bold inl)         = [Strong (inlines inl)]
 inlines (Emphasis inl)     = [Emph (inlines inl)]
-inlines (DocLink inl loc)  = [Link (inlines inl) (loc2target loc)]
-inlines (DocImage inl loc) = [Image (inlines inl) (loc2target loc)]
+inlines (DocLink inl loc)  = [Link nullAttr (inlines inl) (loc2target loc)]
+inlines (DocImage inl loc) = [Image nullAttr (inlines inl) (loc2target loc)]
 
 {- |
    Conversion of complex elements.  The only reason it's in the IO monad is

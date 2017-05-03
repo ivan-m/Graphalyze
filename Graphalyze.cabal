@@ -37,7 +37,7 @@ Library {
                          bktrees >= 0.2 && <0.4,
                          fgl == 5.5.*,
                          graphviz >= 2999.15 && < 2999.19,
-                         pandoc >= 1.12 && < 1.16,
+                         pandoc == 1.19.*,
                          text
 
         if flag(old-locale) {
