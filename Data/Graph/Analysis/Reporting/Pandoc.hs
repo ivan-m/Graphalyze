@@ -50,7 +50,7 @@ pandocHtml :: PandocDocument
 pandocHtml = pd { writer        = writeHtmlString
                 , extension     = "html"
                 , templateName  = "html"
-                , extGraphProps = Just VProps { size   = DefaultSize
+                , extGraphProps = Just VProps { grSize = DefaultSize
                                               , format = Svg
                                               }
                 }
@@ -60,7 +60,7 @@ pandocLaTeX = pd { writer     = writeLaTeX
                  , extension  = "tex"
                  , templateName = "latex"
                  -- 4.5" should be less than \textwidth in LaTeX.
-                 , graphProps = defaultProps { size = createSize 4.5 }
+                 , graphProps = defaultProps { grSize = createSize 4.5 }
                  }
 
 pandocRtf :: PandocDocument
@@ -116,7 +116,7 @@ defaultWidth :: Double
 defaultWidth = 10
 
 defaultProps :: VisProperties
-defaultProps = VProps { size   = createSize defaultWidth
+defaultProps = VProps { grSize = createSize defaultWidth
                       , format = Png
                       }
 

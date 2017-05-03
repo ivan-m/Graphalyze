@@ -37,7 +37,7 @@ import qualified Data.GraphViz.Attributes.Complete as AC
 import           Data.GraphViz.Commands.IO         (writeDotFile)
 import           Data.GraphViz.Exception
 
-import Control.Exception     (SomeException (..), tryJust)
+import Control.Exception     (SomeException(..), tryJust)
 import Control.Monad         (liftM, when)
 import Data.Time             (formatTime, getZonedTime, zonedTimeToLocalTime)
 import System.Directory      (createDirectoryIfMissing)
@@ -142,7 +142,7 @@ data VisParams = VParams { -- | Root directory of the document.
                deriving (Eq, Ord, Show, Read)
 
 -- | A specification on how to visualise a 'DocGraph'.
-data VisProperties = VProps { size   :: GraphSize
+data VisProperties = VProps { grSize :: GraphSize
                             , format :: GraphvizOutput
                             }
                    deriving (Eq, Ord, Show, Read)
@@ -182,7 +182,7 @@ legToDef :: FilePath -> FilePath -> VisProperties
 legToDef fp gfp vp (Left dg) def = liftM ((,) def)
                                    $ graphImage' fp gfp vp' dg
   where
-    vp' = vp { size = DefaultSize }
+    vp' = vp { grSize = DefaultSize }
 legToDef _ _ _ (Right di) def = return (def,di)
 
 -- | Return today's date as a string, e.g. \"Monday 1 January, 2000\".
@@ -273,7 +273,7 @@ graphImage' rDir gDir vp dg = liftM (either id f)
 
 -- | Add a 'GlobalAttribute' to the 'DotGraph' specifying the given size.
 setSize      :: VisProperties -> DotGraph a -> DotGraph a
-setSize vp g = case size vp of
+setSize vp g = case grSize vp of
                  DefaultSize   -> g
                  (GivenSize s) -> g { graphStatements = setS s}
   where
