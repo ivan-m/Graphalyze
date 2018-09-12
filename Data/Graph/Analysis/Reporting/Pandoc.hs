@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 {- |
    Module      : Data.Graph.Analysis.Reporting.Pandoc
    Description : Graphalyze Types and Classes
@@ -39,6 +41,8 @@ import Data.List         (intersperse)
 import Data.Maybe        (fromJust, isNothing)
 import System.Directory  (removeDirectoryRecursive)
 import System.FilePath   ((<.>), (</>))
+import Data.Text (Text(..))
+import qualified Data.Text as T
 
 -- -----------------------------------------------------------------------------
 
@@ -46,8 +50,14 @@ import System.FilePath   ((<.>), (</>))
    The actual exported writers.
  -}
 
+#if MIN_VERSION_pandoc (2,0,0)
+writeHtmlStringGeneric = writeHtml5String
+#else
+writeHtmlStringGeneric = writeHtmlString
+#endif
+
 pandocHtml :: PandocDocument
-pandocHtml = pd { writer        = writeHtmlString
+pandocHtml = pd { writer        = writeHtmlStringGeneric
                 , extension     = "html"
                 , templateName  = "html"
                 , extGraphProps = Just VProps { grSize = DefaultSize
@@ -84,7 +94,11 @@ pandocMarkdown = pd { writer = writeMarkdown
 -- | Definition of a Pandoc Document.  Size measurements are in inches,
 --   and a 6:4 ratio is used for width:length.
 data PandocDocument = PD { -- | The Pandoc document style
+#if MIN_VERSION_pandoc (2,0,0)
+                           writer        :: WriterOptions -> Pandoc -> PandocPure Text
+#else
                            writer        :: WriterOptions -> Pandoc -> String
+#endif
                            -- | The file extension used
                          , extension     :: FilePath
                            -- | Which template to get.
@@ -144,23 +158,29 @@ defaultProcess = PP { secLevel  = 1
 
 -- | Create the document.
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
-createPandoc p d = do created <- tryCreateDirectory dir
-                      -- If the first one fails, so will this one.
-                      _ <- tryCreateDirectory $ dir </> gdir
-                      if not created
-                         then failDoc
-                         else do d' <- addLegend dir gdir (graphProps p) d
-                                 elems <- multiElems pp $ content d'
-                                 case elems of
-                                   Just es -> do let es' = htmlAuthDt : es
-                                                     pnd = Pandoc meta es'
-                                                     doc = convert pnd
-                                                 wr <- tryWrite doc
-                                                 case wr of
-                                                   (Right _) -> success
-                                                   (Left _)  -> failDoc
-                                   Nothing -> failDoc
-    where
+createPandoc p d = do
+  created <- tryCreateDirectory dir
+  -- If the first one fails, so will this one.
+  _ <- tryCreateDirectory $ dir </> gdir
+  if not created
+    then failDoc
+    else do
+      d' <- addLegend dir gdir (graphProps p) d
+      elems <- multiElems pp $ content d'
+      case elems of
+        Just es -> do
+          let es' = htmlAuthDt : es
+              pnd = Pandoc meta es'
+#if MIN_VERSION_pandoc (2,0,0)
+          let doc = runPure $ convert pnd
+#else
+          doc <- tryWrite $ convert pnd
+#endif
+          case doc of
+            (Right _) -> success
+            (Left _)  -> failDoc
+        Nothing -> failDoc
+ where
       dir = rootDirectory d
       gdir = graphDirectory d
       auth = author d
