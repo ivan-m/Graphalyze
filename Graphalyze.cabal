@@ -33,10 +33,10 @@ Library {
                          filepath,
                          process,
                          random,
-                         bktrees >= 0.2 && <0.4,
-                         fgl == 5.6.*,
-                         graphviz >= 2999.20 && < 2999.21,
-                         pandoc >= 2.0 && < 2.3,
+                         bktrees >= 0.2,
+                         fgl >= 5.6,
+                         graphviz >= 2999.20 ,
+                         pandoc >= 2.0 ,
                          text
 
         if flag(old-locale) {
