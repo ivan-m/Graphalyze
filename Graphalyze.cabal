@@ -1,5 +1,5 @@
 Name:                Graphalyze
-Version:             0.15.0.0
+Version:             0.15.0.1
 Synopsis:            Graph-Theoretic Analysis library.
 Description:         A library to use graph theory to analyse the relationships
                         inherent in discrete data.
@@ -13,8 +13,7 @@ Extra-Source-Files:  TODO
 Cabal-Version:       >= 1.6
 Build-Type:          Simple
 
-Tested-With:         GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4,
-                     GHC == 7.10.2, GHC == 7.11.*
+Tested-With:         GHC == 8.4.2
 
 Source-Repository head
     Type:         git
@@ -34,10 +33,10 @@ Library {
                          filepath,
                          process,
                          random,
-                         bktrees >= 0.2 && <0.4,
-                         fgl == 5.5.*,
-                         graphviz >= 2999.15 && < 2999.20,
-                         pandoc == 1.19.*,
+                         bktrees >= 0.2,
+                         fgl >= 5.6,
+                         graphviz >= 2999.20 ,
+                         pandoc >= 2.0 ,
                          text
 
         if flag(old-locale) {
