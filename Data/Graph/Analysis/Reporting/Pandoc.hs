@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {- |
    Module      : Data.Graph.Analysis.Reporting.Pandoc
    Description : Graphalyze Types and Classes
@@ -39,6 +41,9 @@ import Data.List         (intersperse)
 import Data.Maybe        (fromJust, isNothing)
 import System.Directory  (removeDirectoryRecursive)
 import System.FilePath   ((<.>), (</>))
+import Data.Text (Text)
+import qualified Data.Text as Text
+import qualified Data.Text.IO as Text
 
 -- -----------------------------------------------------------------------------
 
@@ -47,7 +52,7 @@ import System.FilePath   ((<.>), (</>))
  -}
 
 pandocHtml :: PandocDocument
-pandocHtml = pd { writer        = writeHtmlString
+pandocHtml = pd { writer        = writeHtml5String
                 , extension     = "html"
                 , templateName  = "html"
                 , extGraphProps = Just VProps { grSize = DefaultSize
@@ -84,11 +89,11 @@ pandocMarkdown = pd { writer = writeMarkdown
 -- | Definition of a Pandoc Document.  Size measurements are in inches,
 --   and a 6:4 ratio is used for width:length.
 data PandocDocument = PD { -- | The Pandoc document style
-                           writer        :: WriterOptions -> Pandoc -> String
+                           writer        :: WriterOptions -> Pandoc -> PandocPure Text
                            -- | The file extension used
                          , extension     :: FilePath
                            -- | Which template to get.
-                         , templateName  :: String
+                         , templateName  :: Text
                            -- | Size of graphs to be produced.
                          , graphProps    :: VisProperties
                            -- | Optional size of external linked graphs.
@@ -144,27 +149,32 @@ defaultProcess = PP { secLevel  = 1
 
 -- | Create the document.
 createPandoc     :: PandocDocument -> Document -> IO (Maybe FilePath)
-createPandoc p d = do created <- tryCreateDirectory dir
-                      -- If the first one fails, so will this one.
-                      _ <- tryCreateDirectory $ dir </> gdir
-                      if not created
-                         then failDoc
-                         else do d' <- addLegend dir gdir (graphProps p) d
-                                 elems <- multiElems pp $ content d'
-                                 case elems of
-                                   Just es -> do let es' = htmlAuthDt : es
-                                                     pnd = Pandoc meta es'
-                                                     doc = convert pnd
-                                                 wr <- tryWrite doc
-                                                 case wr of
-                                                   (Right _) -> success
-                                                   (Left _)  -> failDoc
-                                   Nothing -> failDoc
-    where
+createPandoc p d = do
+  created <- tryCreateDirectory dir
+  -- If the first one fails, so will this one.
+  _ <- tryCreateDirectory $ dir </> gdir
+  if not created
+    then failDoc
+    else do
+      d' <- addLegend dir gdir (graphProps p) d
+      elems <- multiElems pp $ content d'
+      case elems of
+        Just es -> do
+          let es' = htmlAuthDt : es
+              pnd = Pandoc meta es'
+          case runPure $ convert pnd of
+            Left _ -> failDoc
+            Right text -> do
+              doc <- tryWrite text
+              case doc of
+                (Right _) -> success
+                (Left _)  -> failDoc
+        Nothing -> failDoc
+ where
       dir = rootDirectory d
       gdir = graphDirectory d
-      auth = author d
-      dt = date d
+      auth = (Text.pack . author) d
+      dt = (Text.pack . date) d
       meta = makeMeta (title d) auth dt
       -- Html output doesn't show date and auth anywhere by default.
       htmlAuthDt = htmlInfo auth dt
@@ -177,8 +187,8 @@ createPandoc p d = do created <- tryCreateDirectory dir
                    }
       convert = writer p writerOptions
       file = dir </> fileFront d <.> extension p
-      tryWrite :: String -> IO (Either SomeException ())
-      tryWrite = try . writeFile file
+      tryWrite :: Text -> IO (Either SomeException ())
+      tryWrite = try . Text.writeFile file
       success = return (Just file)
       failDoc = removeDirectoryRecursive dir >> return Nothing
 
@@ -189,25 +199,25 @@ createPandoc p d = do created <- tryCreateDirectory dir
  -}
 
 -- | The meta information
-makeMeta         :: DocInline -> String -> String -> Meta
+makeMeta         :: DocInline -> Text -> Text -> Meta
 makeMeta tle a t = P.makeMeta (inlines tle) [[Str a]] [Str t]
 
 -- | Html output doesn't show the author and date; use this to print it.
-htmlInfo         :: String -> String -> Block
+htmlInfo         :: Text -> Text -> Block
 htmlInfo auth dt = RawBlock (Format "html") html
     where
       heading = "<h1>Document Information</h1>"
-      html = unlines [heading, htmlize auth, htmlize dt]
-      htmlize str = "<blockquote><p><em>" ++ str ++ "</em></p></blockquote>"
+      html = Text.unlines [heading, htmlize auth, htmlize dt]
+      htmlize str = "<blockquote><p><em>" <> str <> "</em></p></blockquote>"
 
 -- | Link conversion
 loc2target             :: Location -> Target
-loc2target (Web url)   = (url,"")
-loc2target (File file) = (file,"")
+loc2target (Web url)   = (Text.pack url,"")
+loc2target (File file) = (Text.pack file,"")
 
 -- | Conversion of simple inline elements.
 inlines                    :: DocInline -> [Inline]
-inlines (Text str)         = [Str str]
+inlines (Text str)         = [Str (Text.pack str)]
 inlines BlankSpace         = [Space]
 inlines (Grouping grp)     = concat . intersperse [Space] $ map inlines grp
 inlines (Bold inl)         = [Strong (inlines inl)]
