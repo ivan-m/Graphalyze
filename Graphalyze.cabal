@@ -1,64 +1,60 @@
-Name:                Graphalyze
-Version:             0.15.0.1
-Synopsis:            Graph-Theoretic Analysis library.
-Description:         A library to use graph theory to analyse the relationships
-                        inherent in discrete data.
-Category:            Graphs, Algorithms
-License:             OtherLicense
-License-File:        LICENSE
-Copyright:           (c) Ivan Lazar Miljenovic
-Author:              Ivan Lazar Miljenovic
-Maintainer:          Ivan.Miljenovic@gmail.com
-Extra-Source-Files:  TODO
-Cabal-Version:       >= 1.6
-Build-Type:          Simple
+cabal-version: 2.2
+name: Graphalyze
+version: 0.15.0.1
+author: Ivan Lazar Miljenovic
+maintainer: Ivan.Miljenovic@gmail.com
+synopsis: Graph-Theoretic Analysis library.
+description:
+  A library to use graph theory to analyse the relationships
+  inherent in discrete data.
+category: Graphs, Algorithms
+license-file: LICENSE
+tested-with: GHC == 8.4.2
+extra-source-files: TODO
+build-type: Simple
+copyright: (c) Ivan Lazar Miljenovic
 
-Tested-With:         GHC == 8.4.2
+library
+  exposed-modules:
+    Data.Graph.Analysis
+    Data.Graph.Analysis.Algorithms
+    Data.Graph.Analysis.Algorithms.Clustering
+    Data.Graph.Analysis.Algorithms.Common
+    Data.Graph.Analysis.Algorithms.Directed
+    Data.Graph.Analysis.Reporting
+    Data.Graph.Analysis.Reporting.Pandoc
+    Data.Graph.Analysis.Types
+    Data.Graph.Analysis.Utils
+    Data.Graph.Analysis.Visualisation
+  build-depends:
+    , array
+    , base == 4.*
+    , bktrees >= 0.2
+    , containers
+    , directory
+    , fgl >= 5.6
+    , filepath
+    , graphviz >= 2999.20
+    , pandoc >= 2.0
+    , process
+    , random
+    , text
+  ghc-options: -Wall
+  other-modules:
+    Data.Graph.Analysis.Internal,
+    Paths_Graphalyze
 
-Source-Repository head
-    Type:         git
-    Location:     https://github.com/ivan-m/Graphalyze.git
+  if flag ( old-locale )
+    build-depends: old-locale, time < 1.5
 
-Flag old-locale {
-     Description: Use old-locale and time < 1.5
-     Manual:      False
-     Default:     False
-}
+  else
+    build-depends: time >= 1.5 && < 1.9
 
-Library {
-        Build-Depends:   base == 4.*,
-                         array,
-                         containers,
-                         directory,
-                         filepath,
-                         process,
-                         random,
-                         bktrees >= 0.2,
-                         fgl >= 5.6,
-                         graphviz >= 2999.20 ,
-                         pandoc >= 2.0 ,
-                         text
+source-repository head
+  type: git
+  location: https://github.com/ivan-m/Graphalyze.git
 
-        if flag(old-locale) {
-           Build-Depends: time < 1.5,
-                          old-locale
-        } else {
-           Build-Depends: time >= 1.5 && < 1.9
-        }
-
-        Exposed-Modules:     Data.Graph.Analysis
-                             Data.Graph.Analysis.Types
-                             Data.Graph.Analysis.Utils
-                             Data.Graph.Analysis.Visualisation
-                             Data.Graph.Analysis.Algorithms
-                             Data.Graph.Analysis.Algorithms.Common
-                             Data.Graph.Analysis.Algorithms.Directed
-                             Data.Graph.Analysis.Algorithms.Clustering
-                             Data.Graph.Analysis.Reporting
-                             Data.Graph.Analysis.Reporting.Pandoc
-
-        Other-Modules:       Data.Graph.Analysis.Internal,
-                             Paths_Graphalyze
-
-        Ghc-Options:         -Wall
-}
+flag old-locale
+  description: Use old-locale and time < 1.5
+  manual: False
+  default: False
