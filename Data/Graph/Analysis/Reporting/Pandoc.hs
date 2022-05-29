@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {- |
@@ -44,6 +43,7 @@ import System.Directory  (removeDirectoryRecursive)
 import System.FilePath   ((<.>), (</>))
 import Data.Text (Text)
 import qualified Data.Text as Text
+import qualified Data.Text.IO as Text
 
 -- -----------------------------------------------------------------------------
 
@@ -51,14 +51,8 @@ import qualified Data.Text as Text
    The actual exported writers.
  -}
 
-#if MIN_VERSION_pandoc (2,0,0)
-writeHtmlStringGeneric = writeHtml5String
-#else
-writeHtmlStringGeneric = writeHtmlString
-#endif
-
 pandocHtml :: PandocDocument
-pandocHtml = pd { writer        = writeHtmlStringGeneric
+pandocHtml = pd { writer        = writeHtml5String
                 , extension     = "html"
                 , templateName  = "html"
                 , extGraphProps = Just VProps { grSize = DefaultSize
@@ -95,11 +89,7 @@ pandocMarkdown = pd { writer = writeMarkdown
 -- | Definition of a Pandoc Document.  Size measurements are in inches,
 --   and a 6:4 ratio is used for width:length.
 data PandocDocument = PD { -- | The Pandoc document style
-#if MIN_VERSION_pandoc (2,0,0)
                            writer        :: WriterOptions -> Pandoc -> PandocPure Text
-#else
-                           writer        :: WriterOptions -> Pandoc -> Text
-#endif
                            -- | The file extension used
                          , extension     :: FilePath
                            -- | Which template to get.
@@ -172,14 +162,13 @@ createPandoc p d = do
         Just es -> do
           let es' = htmlAuthDt : es
               pnd = Pandoc meta es'
-#if MIN_VERSION_pandoc (2,0,0)
-          let doc = runPure $ convert pnd
-#else
-          doc <- tryWrite $ convert pnd
-#endif
-          case doc of
-            (Right _) -> success
-            (Left _)  -> failDoc
+          case runPure $ convert pnd of
+            Left _ -> failDoc
+            Right text -> do
+              doc <- tryWrite text
+              case doc of
+                (Right _) -> success
+                (Left _)  -> failDoc
         Nothing -> failDoc
  where
       dir = rootDirectory d
@@ -198,8 +187,8 @@ createPandoc p d = do
                    }
       convert = writer p writerOptions
       file = dir </> fileFront d <.> extension p
-      tryWrite :: String -> IO (Either SomeException ())
-      tryWrite = try . writeFile file
+      tryWrite :: Text -> IO (Either SomeException ())
+      tryWrite = try . Text.writeFile file
       success = return (Just file)
       failDoc = removeDirectoryRecursive dir >> return Nothing
 
