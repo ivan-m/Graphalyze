@@ -39,22 +39,12 @@ library
     , process
     , random
     , text
+    , time
   ghc-options: -Wall
   other-modules:
     Data.Graph.Analysis.Internal,
     Paths_Graphalyze
 
-  if flag ( old-locale )
-    build-depends: old-locale, time < 1.5
-
-  else
-    build-depends: time >= 1.5 && < 1.9
-
 source-repository head
   type: git
   location: https://github.com/ivan-m/Graphalyze.git
-
-flag old-locale
-  description: Use old-locale and time < 1.5
-  manual: False
-  default: False
